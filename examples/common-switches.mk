@@ -45,6 +45,7 @@ DIAGNOSTIC          ?= 0
 DISABLE_DOC         ?= 0
 DNS_CLIENT          ?= 0
 ECDSA               ?= 0
+EST_CLIENT          ?= 0
 JAM_DETECTION       ?= 0
 JOINER              ?= 0
 LEGACY              ?= 0
@@ -128,6 +129,10 @@ endif
 
 ifeq ($(ECDSA),1)
 configure_OPTIONS              += --enable-ecdsa
+endif
+
+ifeq ($(EST_CLIENT),1)
+configure_OPTIONS              += --enable-est-client
 endif
 
 ifeq ($(JAM_DETECTION),1)

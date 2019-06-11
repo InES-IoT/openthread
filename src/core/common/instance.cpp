@@ -83,6 +83,9 @@ Instance::Instance(void)
 #if OPENTHREAD_ENABLE_CHANNEL_MANAGER
     , mChannelManager(*this)
 #endif
+#if OPENTHREAD_ENABLE_EST_CLIENT
+    , mEstClient(*this)
+#endif
 #if OPENTHREAD_CONFIG_ENABLE_ANNOUNCE_SENDER
     , mAnnounceSender(*this)
 #endif
