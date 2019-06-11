@@ -114,6 +114,7 @@ SOURCES_COMMON                      = \
     api/dataset_ftd_api.cpp           \
     api/dns_api.cpp                   \
     api/entropy_api.cpp               \
+    api/est_client_api.cpp            \
     api/icmp6_api.cpp                 \
     api/instance_api.cpp              \
     api/ip6_api.cpp                   \
@@ -158,6 +159,7 @@ SOURCES_COMMON                      = \
     crypto/mbedtls.cpp                \
     crypto/pbkdf2_cmac.cpp            \
     crypto/sha256.cpp                 \
+    est/est_client.cpp                \
     mac/channel_mask.cpp              \
     mac/link_raw.cpp                  \
     mac/mac.cpp                       \
@@ -327,6 +329,7 @@ HEADERS_COMMON                      = \
     crypto/mbedtls.hpp                \
     crypto/pbkdf2_cmac.h              \
     crypto/sha256.hpp                 \
+    est/est_client.hpp                \
     mac/channel_mask.hpp              \
     mac/link_raw.hpp                  \
     mac/mac.hpp                       \

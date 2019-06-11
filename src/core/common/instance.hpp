@@ -52,6 +52,7 @@
 #include "coap/coap.hpp"
 #include "common/code_utils.hpp"
 #include "crypto/mbedtls.hpp"
+#include "est/est_client.hpp"
 #if !OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
 #include "utils/heap.hpp"
 #endif
@@ -353,6 +354,10 @@ private:
     Utils::ChannelManager mChannelManager;
 #endif
 
+#if OPENTHREAD_ENABLE_EST_CLIENT
+    Est::Client mEstClient;
+#endif
+
 #if OPENTHREAD_CONFIG_ENABLE_ANNOUNCE_SENDER
     AnnounceSender mAnnounceSender;
 #endif
@@ -598,6 +603,13 @@ template <> inline Dhcp6::Dhcp6Client &Instance::Get(void)
 template <> inline Dhcp6::Dhcp6Server &Instance::Get(void)
 {
     return mThreadNetif.mDhcp6Server;
+}
+#endif
+
+#if OPENTHREAD_ENABLE_EST_CLIENT
+template <> inline Est::Client &Instance::Get(void)
+{
+    return mEstClient;
 }
 #endif
 
