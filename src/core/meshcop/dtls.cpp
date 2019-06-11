@@ -31,8 +31,6 @@
  *   This file implements the necessary hooks for mbedTLS.
  */
 
-#define WPP_NAME "dtls.tmh"
-
 #include "dtls.hpp"
 
 #include <mbedtls/debug.h>
@@ -440,11 +438,6 @@ void Dtls::Disconnect(void)
     new (&mPeerAddress) Ip6::MessageInfo();
     mSocket.Connect(Ip6::SockAddr());
 
-    if (mConnectedHandler != NULL)
-    {
-        mConnectedHandler(mContext, false);
-    }
-
     FreeMbedtls();
 
 exit:
@@ -802,6 +795,11 @@ void Dtls::HandleTimer(void)
     case kStateCloseNotify:
         mState = kStateOpen;
         mTimer.Stop();
+
+        if (mConnectedHandler != NULL)
+        {
+            mConnectedHandler(mContext, false);
+        }
         break;
 
     default:
