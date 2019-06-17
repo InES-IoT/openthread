@@ -296,8 +296,8 @@ void DatasetManager::SendSetResponse(const Coap::Message &   aRequest,
 
     VerifyOrExit((message = NewMeshCoPMessage(Get<Coap::Coap>())) != NULL, error = OT_ERROR_NO_BUFS);
 
-    message->SetDefaultResponseHeader(aRequest);
-    message->SetPayloadMarker();
+    SuccessOrExit(error = message->SetDefaultResponseHeader(aRequest));
+    SuccessOrExit(error = message->SetPayloadMarker());
 
     state.Init();
     state.SetState(aState);
@@ -317,7 +317,9 @@ exit:
 
 otError ActiveDataset::CreateNewNetwork(otOperationalDataset &aDataset)
 {
-    otError error = OT_ERROR_NONE;
+    otError          error             = OT_ERROR_NONE;
+    Mac::ChannelMask supportedChannels = Get<Mac::Mac>().GetSupportedChannelMask();
+    Mac::ChannelMask preferredChannels(otPlatRadioGetPreferredChannelMask(&GetInstance()));
 
     memset(&aDataset, 0, sizeof(aDataset));
 
@@ -331,8 +333,20 @@ otError ActiveDataset::CreateNewNetwork(otOperationalDataset &aDataset)
     SuccessOrExit(error = Random::Crypto::FillBuffer(&aDataset.mMeshLocalPrefix.m8[1], OT_MESH_LOCAL_PREFIX_SIZE - 1));
 
     aDataset.mSecurityPolicy.mFlags = Get<KeyManager>().GetSecurityPolicyFlags();
-    aDataset.mChannelMask           = Get<Mac::Mac>().GetSupportedChannelMask().GetMask();
-    aDataset.mChannel               = Get<Mac::Mac>().GetSupportedChannelMask().ChooseRandomChannel();
+
+    // If the preferred channel mask is not empty, select a random
+    // channel from it, otherwise choose one from the supported
+    // channel mask.
+
+    preferredChannels.Intersect(supportedChannels);
+
+    if (preferredChannels.IsEmpty())
+    {
+        preferredChannels = supportedChannels;
+    }
+
+    aDataset.mChannel     = preferredChannels.ChooseRandomChannel();
+    aDataset.mChannelMask = supportedChannels.GetMask();
 
     do
     {

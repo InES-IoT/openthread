@@ -172,17 +172,7 @@ void Mac::Scan(Operation aScanOperation, uint32_t aScanChannels, uint16_t aScanD
     StartOperation(aScanOperation);
 }
 
-bool Mac::IsActiveScanInProgress(void)
-{
-    return (mOperation == kOperationActiveScan) || (mPendingActiveScan);
-}
-
-bool Mac::IsEnergyScanInProgress(void)
-{
-    return (mOperation == kOperationEnergyScan) || (mPendingEnergyScan);
-}
-
-bool Mac::IsInTransmitState(void)
+bool Mac::IsInTransmitState(void) const
 {
     return (mOperation == kOperationTransmitData) || (mOperation == kOperationTransmitBeacon) ||
            (mOperation == kOperationTransmitOutOfBandFrame);
@@ -345,11 +335,6 @@ exit:
     return;
 }
 
-void Mac::SetShortAddress(ShortAddress aShortAddress)
-{
-    mSubMac.SetShortAddress(aShortAddress);
-}
-
 otError Mac::SetPanChannel(uint8_t aChannel)
 {
     otError error = OT_ERROR_NONE;
@@ -433,11 +418,6 @@ exit:
     return;
 }
 
-otError Mac::SetNetworkName(const char *aNetworkName)
-{
-    return SetNetworkName(aNetworkName, OT_NETWORK_NAME_MAX_SIZE + 1);
-}
-
 otError Mac::SetNetworkName(const char *aBuffer, uint8_t aLength)
 {
     otError error  = OT_ERROR_NONE;
@@ -478,7 +458,7 @@ exit:
     return;
 }
 
-otError Mac::SendFrameRequest(void)
+otError Mac::RequestFrameTransmission(void)
 {
     otError error = OT_ERROR_NONE;
 
@@ -491,7 +471,7 @@ exit:
     return error;
 }
 
-otError Mac::SendOutOfBandFrameRequest(otRadioFrame *aOobFrame)
+otError Mac::RequestOutOfBandFrameTransmission(otRadioFrame *aOobFrame)
 {
     otError error = OT_ERROR_NONE;
 
@@ -717,18 +697,19 @@ void Mac::GenerateNonce(const ExtAddress &aAddress, uint32_t aFrameCounter, uint
     aNonce[0] = aSecurityLevel;
 }
 
-void Mac::SendBeaconRequest(Frame &aFrame)
+void Mac::PrepareBeaconRequest(Frame &aFrame)
 {
-    // initialize MAC header
     uint16_t fcf = Frame::kFcfFrameMacCmd | Frame::kFcfDstAddrShort | Frame::kFcfSrcAddrNone;
+
     aFrame.InitMacHeader(fcf, Frame::kSecNone);
     aFrame.SetDstPanId(kShortAddrBroadcast);
     aFrame.SetDstAddr(kShortAddrBroadcast);
     aFrame.SetCommandId(Frame::kMacCmdBeaconRequest);
+
     otLogInfoMac("Sending Beacon Request");
 }
 
-void Mac::SendBeacon(Frame &aFrame)
+void Mac::PrepareBeacon(Frame &aFrame)
 {
     uint8_t        numUnsecurePorts;
     uint8_t        beaconLength;
@@ -736,13 +717,11 @@ void Mac::SendBeacon(Frame &aFrame)
     Beacon *       beacon        = NULL;
     BeaconPayload *beaconPayload = NULL;
 
-    // initialize MAC header
     fcf = Frame::kFcfFrameBeacon | Frame::kFcfDstAddrNone | Frame::kFcfSrcAddrExt;
     aFrame.InitMacHeader(fcf, Frame::kSecNone);
     aFrame.SetSrcPanId(mPanId);
     aFrame.SetSrcAddr(GetExtAddress());
 
-    // write payload
     beacon = reinterpret_cast<Beacon *>(aFrame.GetPayload());
     beacon->Init();
     beaconLength = sizeof(*beacon);
@@ -919,7 +898,7 @@ void Mac::BeginTransmit(void)
     case kOperationActiveScan:
         mSubMac.SetPanId(kPanIdBroadcast);
         sendFrame.SetChannel(mScanChannel);
-        SendBeaconRequest(sendFrame);
+        PrepareBeaconRequest(sendFrame);
         sendFrame.SetSequence(0);
         sendFrame.SetMaxCsmaBackoffs(kMaxCsmaBackoffsDirect);
         sendFrame.SetMaxFrameRetries(kMaxFrameRetriesDirect);
@@ -927,7 +906,7 @@ void Mac::BeginTransmit(void)
 
     case kOperationTransmitBeacon:
         sendFrame.SetChannel(mRadioChannel);
-        SendBeacon(sendFrame);
+        PrepareBeacon(sendFrame);
         sendFrame.SetSequence(mBeaconSequence++);
         sendFrame.SetMaxCsmaBackoffs(kMaxCsmaBackoffsDirect);
         sendFrame.SetMaxFrameRetries(kMaxFrameRetriesDirect);
@@ -1730,11 +1709,6 @@ exit:
     return error;
 }
 
-void Mac::SetPcapCallback(otLinkPcapCallback aPcapCallback, void *aCallbackContext)
-{
-    mSubMac.SetPcapCallback(aPcapCallback, aCallbackContext);
-}
-
 void Mac::SetPromiscuous(bool aPromiscuous)
 {
     mPromiscuous = aPromiscuous;
@@ -1747,11 +1721,6 @@ void Mac::SetPromiscuous(bool aPromiscuous)
 
     mSubMac.SetRxOnWhenBackoff(mRxOnWhenIdle || mPromiscuous);
     UpdateIdleMode();
-}
-
-void Mac::SetEnabled(bool aEnable)
-{
-    mEnabled = aEnable;
 }
 
 void Mac::ResetCounters(void)

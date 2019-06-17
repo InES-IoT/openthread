@@ -516,11 +516,6 @@ template <> inline NetworkData::Leader &Instance::Get(void)
     return mThreadNetif.mNetworkDataLeader;
 }
 
-template <> inline Ip6::Routes &Instance::Get(void)
-{
-    return mIp6.mRoutes;
-}
-
 template <> inline Ip6::Udp &Instance::Get(void)
 {
     return mIp6.mUdp;

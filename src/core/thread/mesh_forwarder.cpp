@@ -189,7 +189,7 @@ void MeshForwarder::ScheduleTransmissionTask(void)
 
         mSendMessageMaxCsmaBackoffs = Mac::kMaxCsmaBackoffsDirect;
         mSendMessageMaxFrameRetries = Mac::kMaxFrameRetriesDirect;
-        Get<Mac::Mac>().SendFrameRequest();
+        Get<Mac::Mac>().RequestFrameTransmission();
         ExitNow();
     }
 
@@ -385,7 +385,7 @@ exit:
     return error;
 }
 
-bool MeshForwarder::GetRxOnWhenIdle(void)
+bool MeshForwarder::GetRxOnWhenIdle(void) const
 {
     return Get<Mac::Mac>().GetRxOnWhenIdle();
 }

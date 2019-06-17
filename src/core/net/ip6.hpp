@@ -48,7 +48,6 @@
 #include "net/ip6_address.hpp"
 #include "net/ip6_headers.hpp"
 #include "net/ip6_mpl.hpp"
-#include "net/ip6_routes.hpp"
 #include "net/netif.hpp"
 #include "net/socket.hpp"
 #include "net/udp6.hpp"
@@ -280,7 +279,7 @@ public:
      * @sa SetReceiveIp6FilterEnabled
      *
      */
-    bool IsReceiveIp6FilterEnabled(void) { return mIsReceiveIp6FilterEnabled; }
+    bool IsReceiveIp6FilterEnabled(void) const { return mIsReceiveIp6FilterEnabled; }
 
     /**
      * This method sets whether or not Thread control traffic is filtered out when delivering IPv6 datagrams
@@ -300,7 +299,7 @@ public:
      * @returns TRUE if IPv6 forwarding is enabled, FALSE otherwise.
      *
      */
-    bool IsForwardingEnabled(void) { return mForwardingEnabled; }
+    bool IsForwardingEnabled(void) const { return mForwardingEnabled; }
 
     /**
      * This method enables/disables IPv6 forwarding.
@@ -382,6 +381,17 @@ public:
     int8_t GetOnLinkNetif(const Address &aAddress);
 
     /**
+     * This method performs a route lookup.
+     *
+     * @param[in]   aSource       A reference to the IPv6 source address.
+     * @param[in]   aDestination  A reference to the IPv6 destination address.
+     *
+     * @returns The network interface identifier for the interface if a route is round, otherwise -1
+     *
+     */
+    int8_t RouteLookup(const Address &aSource, const Address &aDestination);
+
+    /**
      * This method returns a reference to the send queue.
      *
      * @returns A reference to the send queue.
@@ -435,10 +445,9 @@ private:
     PriorityQueue mSendQueue;
     Tasklet       mSendQueueTask;
 
-    Routes mRoutes;
-    Icmp   mIcmp;
-    Udp    mUdp;
-    Mpl    mMpl;
+    Icmp mIcmp;
+    Udp  mUdp;
+    Mpl  mMpl;
 };
 
 /**
