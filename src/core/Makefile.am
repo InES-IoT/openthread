@@ -156,6 +156,7 @@ SOURCES_COMMON                      = \
     crypto/aes_ccm.cpp                \
     crypto/aes_ecb.cpp                \
     crypto/ecdsa.cpp                  \
+    crypto/ecp.cpp                    \
     crypto/hmac_sha256.cpp            \
     crypto/mbedtls.cpp                \
     crypto/pbkdf2_cmac.cpp            \
@@ -326,6 +327,7 @@ HEADERS_COMMON                      = \
     crypto/aes_ccm.hpp                \
     crypto/aes_ecb.hpp                \
     crypto/ecdsa.hpp                  \
+    crypto/ecp.hpp                    \
     crypto/hmac_sha256.hpp            \
     crypto/mbedtls.hpp                \
     crypto/pbkdf2_cmac.h              \
