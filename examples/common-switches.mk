@@ -133,6 +133,7 @@ endif
 
 ifeq ($(EST_CLIENT),1)
 configure_OPTIONS              += --enable-est-client
+configure_OPTIONS              += --enable-application-coap-secure
 endif
 
 ifeq ($(JAM_DETECTION),1)
