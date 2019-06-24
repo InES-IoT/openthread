@@ -71,6 +71,7 @@ Client::Client(Instance &aInstance)
     , mIsConnected(false)
     , mStarted(false)
     , mVerifyEstServerCertificate(false)
+    , mIsEnrolled(false)
     , mApplicationContext(NULL)
     , mConnectCallback(NULL)
     , mResponseCallback(NULL)
@@ -79,6 +80,7 @@ Client::Client(Instance &aInstance)
     OT_UNUSED_VARIABLE(mIsConnected);
     OT_UNUSED_VARIABLE(mStarted);
     OT_UNUSED_VARIABLE(mVerifyEstServerCertificate);
+    OT_UNUSED_VARIABLE(mIsEnrolled);
     OT_UNUSED_VARIABLE(mApplicationContext);
     OT_UNUSED_VARIABLE(mConnectCallback);
     OT_UNUSED_VARIABLE(mResponseCallback);
@@ -256,21 +258,103 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
                                uint8_t        aKeyUsageFlags,
                                bool           aPemFormat)
 {
-    otError mError = OT_ERROR_NOT_IMPLEMENTED;
 
-    VerifyOrExit(mIsConnected, mError = OT_ERROR_INVALID_STATE);
+    otError error = OT_ERROR_NONE;
+    mbedtls_entropy_context *entropyCtx;
+    mbedtls_ctr_drbg_context *ctrDrbgCtx;
+    mbedtls_x509write_csr csr;
+    mbedtls_pk_context pkCtx;
+    uint8_t seed[CSR_SEED_LENGTH];
+    uint16_t seedLength = CSR_SEED_LENGTH;
+    uint8_t nsCertType = 0;
+    uint8_t buffer[CSR_BUFFER_SIZE] = {0};
+    size_t bufferLength = CSR_BUFFER_SIZE;
+    uint8_t *bufferPointer = NULL;
+    Coap::Message *mCoapMessage = NULL;
 
-    OT_UNUSED_VARIABLE(aPrivateKey);
-    OT_UNUSED_VARIABLE(aPrivateLeyLength);
-    OT_UNUSED_VARIABLE(aPublicKey);
-    OT_UNUSED_VARIABLE(aPublicKeyLength);
-    OT_UNUSED_VARIABLE(aMdType);
-    OT_UNUSED_VARIABLE(aKeyUsageFlags);
-    OT_UNUSED_VARIABLE(aPemFormat);
+    entropyCtx = otEntropyMbedTlsContextGet();
+    ctrDrbgCtx = otRandomCryptoMbedTlsContextGet();
+    mbedtls_x509write_csr_init(&csr);
+    mbedtls_pk_init(&pkCtx);
+
+    VerifyOrExit(mIsConnected && mIsEnrolled, error = OT_ERROR_INVALID_STATE);
+
+    VerifyOrExit(mIsConnected, error = OT_ERROR_INVALID_STATE);
+
+    // Parse key pair
+    VerifyOrExit(mbedtls_pk_parse_key(&pkCtx, aPrivateKey, aPrivateLeyLength, NULL, 0) == 0,
+                 error = OT_ERROR_INVALID_ARGS);
+
+    VerifyOrExit(mbedtls_pk_parse_public_key(&pkCtx, aPublicKey, aPublicKeyLength) == 0,
+                 error = OT_ERROR_INVALID_ARGS);
+
+    // Setup entropy
+    VerifyOrExit(mbedtls_entropy_add_source(entropyCtx, &EntropyPollHandle,
+                                            NULL, CSR_RANDOM_THRESHOLD,
+                                            MBEDTLS_ENTROPY_SOURCE_STRONG) == 0,
+                 error = OT_ERROR_FAILED);
+
+    // Setup CTR_DRBG context
+    mbedtls_ctr_drbg_set_prediction_resistance(ctrDrbgCtx, MBEDTLS_CTR_DRBG_PR_ON);
+
+    VerifyOrExit(otRandomCryptoFillBuffer(seed, seedLength) == OT_ERROR_NONE,
+                 error = OT_ERROR_FAILED);
+
+    VerifyOrExit(mbedtls_ctr_drbg_seed(ctrDrbgCtx, mbedtls_entropy_func, entropyCtx,
+                                       seed, seedLength) == 0,
+                 error = OT_ERROR_FAILED);
+
+    // Create PKCS#10
+    mbedtls_x509write_csr_set_md_alg(&csr, (mbedtls_md_type_t)aMdType);
+
+    VerifyOrExit(mbedtls_x509write_csr_set_key_usage(&csr, aKeyUsageFlags) == 0,
+                 error = OT_ERROR_INVALID_ARGS);
+
+    nsCertType |= MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT;
+    VerifyOrExit(mbedtls_x509write_csr_set_ns_cert_type(&csr, nsCertType) == 0,
+                 error = OT_ERROR_FAILED);
+
+    mbedtls_x509write_csr_set_key(&csr, &pkCtx);
+
+    if(aPemFormat)
+    {
+        // Write CSR in PEM format
+        VerifyOrExit((bufferLength = mbedtls_x509write_csr_pem(&csr, buffer, bufferLength,
+                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                     error = OT_ERROR_NO_BUFS);
+
+        bufferPointer = buffer;
+    }
+    else
+    {
+        // Write CSR in DER format
+        VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
+                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                     error = OT_ERROR_NO_BUFS);
+
+        bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
+    }
+
+    // Send CSR
+    VerifyOrExit((mCoapMessage = mCoapSecure.NewMessage(NULL)) != NULL,
+                 error = OT_ERROR_NO_BUFS);
+
+    SuccessOrExit(error = mCoapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_POST,
+                                             OT_EST_COAPS_SHORT_URI_SIMPLE_REENROLL));
+
+    SuccessOrExit(error = mCoapMessage->AppendContentFormatOption(OT_COAP_OPTION_CONTENT_FORMAT_PKCS10));
+
+    SuccessOrExit(error = mCoapMessage->SetPayloadMarker());
+
+    SuccessOrExit(error = mCoapMessage->Append(bufferPointer, bufferLength));
+
+    mCoapSecure.SendMessage(*mCoapMessage, &Client::SimpleEnrollResponseHandler, this);
 
 exit:
+    mbedtls_x509write_csr_free(&csr);
+    mbedtls_pk_free(&pkCtx);
 
-    return mError;
+    return error;
 }
 
 otError Client::GetCsrAttributes(void)
@@ -395,7 +479,12 @@ void Client::SimpleEnrollResponseHandler(otMessage *          aMessage,
             mMessage[mMessageLength] = '\0';
             otMessageRead(aMessage, otMessageGetOffset(aMessage), mMessage, mMessageLength);
 
-            aResult = Client::CmsReadSignedData(mMessage, mMessageLength, &mPayload, &mPayloadLength);
+            SuccessOrExit(aResult = Client::CmsReadSignedData(mMessage,
+                                                              mMessageLength,
+                                                              &mPayload,
+                                                              &mPayloadLength));
+
+            mIsEnrolled = true;
             break;
 
         default:
