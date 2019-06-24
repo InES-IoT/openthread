@@ -238,6 +238,7 @@ private:
     bool                      mIsConnected;
     bool                      mStarted;
     bool                      mVerifyEstServerCertificate;
+    bool                      mIsEnrolled;
     void *                    mApplicationContext;
     otHandleEstClientConnect  mConnectCallback;
     otHandleEstClientResponse mResponseCallback;
