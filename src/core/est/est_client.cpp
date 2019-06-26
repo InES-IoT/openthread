@@ -155,20 +155,14 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
                              bool           aPemFormat)
 {
     otError error = OT_ERROR_NONE;
-    mbedtls_entropy_context *entropyCtx;
-    mbedtls_ctr_drbg_context *ctrDrbgCtx;
     mbedtls_x509write_csr csr;
     mbedtls_pk_context pkCtx;
-    uint8_t seed[CSR_SEED_LENGTH];
-    uint16_t seedLength = CSR_SEED_LENGTH;
     uint8_t nsCertType = 0;
     uint8_t buffer[CSR_BUFFER_SIZE] = {0};
     size_t bufferLength = CSR_BUFFER_SIZE;
     uint8_t *bufferPointer = NULL;
     Coap::Message *mCoapMessage = NULL;
 
-    entropyCtx = otEntropyMbedTlsContextGet();
-    ctrDrbgCtx = otRandomCryptoMbedTlsContextGet();
     mbedtls_x509write_csr_init(&csr);
     mbedtls_pk_init(&pkCtx);
 
@@ -180,22 +174,6 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
 
     VerifyOrExit(mbedtls_pk_parse_public_key(&pkCtx, aPublicKey, aPublicKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
-
-    // Setup entropy
-    VerifyOrExit(mbedtls_entropy_add_source(entropyCtx, &EntropyPollHandle,
-                                            NULL, CSR_RANDOM_THRESHOLD,
-                                            MBEDTLS_ENTROPY_SOURCE_STRONG) == 0,
-                 error = OT_ERROR_FAILED);
-
-    // Setup CTR_DRBG context
-    mbedtls_ctr_drbg_set_prediction_resistance(ctrDrbgCtx, MBEDTLS_CTR_DRBG_PR_ON);
-
-    VerifyOrExit(otRandomCryptoFillBuffer(seed, seedLength) == OT_ERROR_NONE,
-                 error = OT_ERROR_FAILED);
-
-    VerifyOrExit(mbedtls_ctr_drbg_seed(ctrDrbgCtx, mbedtls_entropy_func, entropyCtx,
-                                       seed, seedLength) == 0,
-                 error = OT_ERROR_FAILED);
 
     // Create PKCS#10
     mbedtls_x509write_csr_set_md_alg(&csr, (mbedtls_md_type_t)aMdType);
@@ -213,7 +191,7 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
     {
         // Write CSR in PEM format
         VerifyOrExit((bufferLength = mbedtls_x509write_csr_pem(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
                      error = OT_ERROR_NO_BUFS);
 
         bufferPointer = buffer;
@@ -222,7 +200,7 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
     {
         // Write CSR in DER format
         VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
                      error = OT_ERROR_NO_BUFS);
 
         bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
@@ -260,20 +238,14 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 {
 
     otError error = OT_ERROR_NONE;
-    mbedtls_entropy_context *entropyCtx;
-    mbedtls_ctr_drbg_context *ctrDrbgCtx;
     mbedtls_x509write_csr csr;
     mbedtls_pk_context pkCtx;
-    uint8_t seed[CSR_SEED_LENGTH];
-    uint16_t seedLength = CSR_SEED_LENGTH;
     uint8_t nsCertType = 0;
     uint8_t buffer[CSR_BUFFER_SIZE] = {0};
     size_t bufferLength = CSR_BUFFER_SIZE;
     uint8_t *bufferPointer = NULL;
     Coap::Message *mCoapMessage = NULL;
 
-    entropyCtx = otEntropyMbedTlsContextGet();
-    ctrDrbgCtx = otRandomCryptoMbedTlsContextGet();
     mbedtls_x509write_csr_init(&csr);
     mbedtls_pk_init(&pkCtx);
 
@@ -287,22 +259,6 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 
     VerifyOrExit(mbedtls_pk_parse_public_key(&pkCtx, aPublicKey, aPublicKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
-
-    // Setup entropy
-    VerifyOrExit(mbedtls_entropy_add_source(entropyCtx, &EntropyPollHandle,
-                                            NULL, CSR_RANDOM_THRESHOLD,
-                                            MBEDTLS_ENTROPY_SOURCE_STRONG) == 0,
-                 error = OT_ERROR_FAILED);
-
-    // Setup CTR_DRBG context
-    mbedtls_ctr_drbg_set_prediction_resistance(ctrDrbgCtx, MBEDTLS_CTR_DRBG_PR_ON);
-
-    VerifyOrExit(otRandomCryptoFillBuffer(seed, seedLength) == OT_ERROR_NONE,
-                 error = OT_ERROR_FAILED);
-
-    VerifyOrExit(mbedtls_ctr_drbg_seed(ctrDrbgCtx, mbedtls_entropy_func, entropyCtx,
-                                       seed, seedLength) == 0,
-                 error = OT_ERROR_FAILED);
 
     // Create PKCS#10
     mbedtls_x509write_csr_set_md_alg(&csr, (mbedtls_md_type_t)aMdType);
@@ -320,7 +276,7 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
     {
         // Write CSR in PEM format
         VerifyOrExit((bufferLength = mbedtls_x509write_csr_pem(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
                      error = OT_ERROR_NO_BUFS);
 
         bufferPointer = buffer;
@@ -329,7 +285,7 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
     {
         // Write CSR in DER format
         VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, ctrDrbgCtx)) > 0,
+                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
                      error = OT_ERROR_NO_BUFS);
 
         bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
@@ -540,27 +496,6 @@ void Client::SimpleReEnrollResponseHandler(otMessage *          aMessage,
 
 exit:
     mResponseCallback(aResult, OT_EST_TYPE_SIMPLE_REENROLL, mPayload, mPayloadLength, mApplicationContext);
-}
-
-int Client::EntropyPollHandle(void *         aData,
-                              unsigned char *aOutput,
-                              size_t         aInLen,
-                              size_t *       aOutLen)
-{
-    int error = 0;
-    OT_UNUSED_VARIABLE(aData);
-
-    VerifyOrExit(otRandomCryptoFillBuffer((uint8_t*)aOutput, (uint16_t)aInLen) == OT_ERROR_NONE,
-                 error = MBEDTLS_ERR_ENTROPY_SOURCE_FAILED);
-
-    if(aOutLen != NULL)
-    {
-        *aOutLen = aInLen;
-    }
-
-exit:
-
-    return error;
 }
 
 } // namespace Est

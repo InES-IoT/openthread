@@ -230,10 +230,6 @@ private:
     void        SimpleReEnrollResponseHandler(otMessage *          aMessage,
                                               const otMessageInfo *aMessageInfo,
                                               otError              aResult);
-    static int  EntropyPollHandle(void *         aData,
-                                  unsigned char *aOutput,
-                                  size_t         aInLen,
-                                  size_t *       aOutLen);
 
     bool                      mIsConnected;
     bool                      mStarted;
