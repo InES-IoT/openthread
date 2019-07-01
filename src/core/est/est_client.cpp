@@ -40,7 +40,7 @@
 #include "openthread/entropy.h"
 #include "openthread/random_crypto.h"
 
-#if OPENTHREAD_ENABLE_EST_CLIENT
+#if OPENTHREAD_ENABLE_EST_CLIENT && OPENTHREAD_ENABLE_APPLICATION_COAP_SECURE
 
 #include "../common/asn1.hpp"
 #include "common/entropy.hpp"
