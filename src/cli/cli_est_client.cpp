@@ -36,7 +36,9 @@
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
 #include <mbedtls/debug.h>
+#include <openthread/coap_secure.h>
 #include <openthread/ip6.h>
+#include <openthread/thread.h>
 
 #include "x509_cert_key.hpp"
 #include "cli/cli.hpp"
@@ -124,6 +126,10 @@ otError EstClient::ProcessConnect(int argc, char *argv[])
     otError    mError;
     otSockAddr mServerAddress;
 
+    // check if connected to Thread network
+    VerifyOrExit(otThreadGetDeviceRole(mInterpreter.mInstance) > OT_DEVICE_ROLE_DETACHED,
+                 mError = OT_ERROR_DETACHED);
+
     mServerAddress.mScopeId = OT_NETIF_INTERFACE_ID_THREAD;
     memset(&mServerAddress, 0, sizeof(mServerAddress));
 
@@ -184,6 +190,8 @@ otError EstClient::ProcessSimpleEnroll(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
+    VerifyOrExit(otCoapSecureIsConnected(mInterpreter.mInstance), mError = OT_ERROR_INVALID_STATE);
+
     mPrivateKeyLength = sizeof(mPrivateKey);
     mPublicKeyLength  = sizeof(mPublicKey);
 
@@ -205,6 +213,8 @@ otError EstClient::ProcessSimpleReEnroll(int argc, char *argv[])
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
+
+    VerifyOrExit(otCoapSecureIsConnected(mInterpreter.mInstance), mError = OT_ERROR_INVALID_STATE);
 
     mPrivateKeyLength = sizeof(mPrivateKey);
     mPublicKeyLength  = sizeof(mPublicKey);
