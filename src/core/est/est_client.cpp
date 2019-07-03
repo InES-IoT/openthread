@@ -95,6 +95,7 @@ otError Client::Start(bool aVerifyPeer)
     mStarted                    = true;
     mVerifyEstServerCertificate = aVerifyPeer;
 
+    mCoapSecure.SetSslAuthMode(mVerifyEstServerCertificate);
     error = mCoapSecure.Start(kLocalPort);
     VerifyOrExit(error);
 
@@ -148,11 +149,8 @@ bool Client::IsConnected(void)
 
 otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
                              uint32_t       aPrivateLeyLength,
-                             const uint8_t *aPublicKey,
-                             uint32_t       aPublicKeyLength,
                              otMdType       aMdType,
-                             uint8_t        aKeyUsageFlags,
-                             bool           aPemFormat)
+                             uint8_t        aKeyUsageFlags)
 {
     otError error = OT_ERROR_NONE;
     mbedtls_x509write_csr csr;
@@ -172,9 +170,6 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
     VerifyOrExit(mbedtls_pk_parse_key(&pkCtx, aPrivateKey, aPrivateLeyLength, NULL, 0) == 0,
                  error = OT_ERROR_INVALID_ARGS);
 
-    VerifyOrExit(mbedtls_pk_parse_public_key(&pkCtx, aPublicKey, aPublicKeyLength) == 0,
-                 error = OT_ERROR_INVALID_ARGS);
-
     // Create PKCS#10
     mbedtls_x509write_csr_set_md_alg(&csr, (mbedtls_md_type_t)aMdType);
 
@@ -187,24 +182,12 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
 
     mbedtls_x509write_csr_set_key(&csr, &pkCtx);
 
-    if(aPemFormat)
-    {
-        // Write CSR in PEM format
-        VerifyOrExit((bufferLength = mbedtls_x509write_csr_pem(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
-                     error = OT_ERROR_NO_BUFS);
+    // Write CSR in DER format
+    VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
+                                                           mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
+                 error = OT_ERROR_NO_BUFS);
 
-        bufferPointer = buffer;
-    }
-    else
-    {
-        // Write CSR in DER format
-        VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
-                     error = OT_ERROR_NO_BUFS);
-
-        bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
-    }
+    bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
 
     // Send CSR
     VerifyOrExit((mCoapMessage = mCoapSecure.NewMessage(NULL)) != NULL,
@@ -230,11 +213,8 @@ exit:
 
 otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
                                uint32_t       aPrivateLeyLength,
-                               const uint8_t *aPublicKey,
-                               uint32_t       aPublicKeyLength,
                                otMdType       aMdType,
-                               uint8_t        aKeyUsageFlags,
-                               bool           aPemFormat)
+                               uint8_t        aKeyUsageFlags)
 {
 
     otError error = OT_ERROR_NONE;
@@ -251,13 +231,8 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 
     VerifyOrExit(mIsConnected && mIsEnrolled, error = OT_ERROR_INVALID_STATE);
 
-    VerifyOrExit(mIsConnected, error = OT_ERROR_INVALID_STATE);
-
     // Parse key pair
     VerifyOrExit(mbedtls_pk_parse_key(&pkCtx, aPrivateKey, aPrivateLeyLength, NULL, 0) == 0,
-                 error = OT_ERROR_INVALID_ARGS);
-
-    VerifyOrExit(mbedtls_pk_parse_public_key(&pkCtx, aPublicKey, aPublicKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
 
     // Create PKCS#10
@@ -272,24 +247,12 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 
     mbedtls_x509write_csr_set_key(&csr, &pkCtx);
 
-    if(aPemFormat)
-    {
-        // Write CSR in PEM format
-        VerifyOrExit((bufferLength = mbedtls_x509write_csr_pem(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
-                     error = OT_ERROR_NO_BUFS);
+    // Write CSR in DER format
+    VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
+                                                           mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
+                 error = OT_ERROR_NO_BUFS);
 
-        bufferPointer = buffer;
-    }
-    else
-    {
-        // Write CSR in DER format
-        VerifyOrExit((bufferLength = mbedtls_x509write_csr_der(&csr, buffer, bufferLength,
-                                                               mbedtls_ctr_drbg_random, Random::Crypto::MbedTlsContextGet())) > 0,
-                     error = OT_ERROR_NO_BUFS);
-
-        bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
-    }
+    bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
 
     // Send CSR
     VerifyOrExit((mCoapMessage = mCoapSecure.NewMessage(NULL)) != NULL,
@@ -304,7 +267,7 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 
     SuccessOrExit(error = mCoapMessage->Append(bufferPointer, bufferLength));
 
-    mCoapSecure.SendMessage(*mCoapMessage, &Client::SimpleEnrollResponseHandler, this);
+    mCoapSecure.SendMessage(*mCoapMessage, &Client::SimpleReEnrollResponseHandler, this);
 
 exit:
     mbedtls_x509write_csr_free(&csr);
@@ -374,6 +337,11 @@ otError Client::CmsReadSignedData(uint8_t       *aMessage,
     mMessagePointer = aMessage;
     mMessageEnd = aMessage + aMessageLength;
 
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+                 mError = OT_ERROR_SECURITY);
+
     VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
                                       &mSequenceLength, MBEDTLS_ASN1_OID) == 0,
                  mError = OT_ERROR_SECURITY);
@@ -381,6 +349,30 @@ otError Client::CmsReadSignedData(uint8_t       *aMessage,
     VerifyOrExit(memcmp(mMessagePointer,
                         EST_ASN1_OID_PKCS7_SIGNEDATA,
                         mSequenceLength) == 0,
+                 mError = OT_ERROR_SECURITY);
+
+    mMessagePointer += mSequenceLength;
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_CONTEXT_SPECIFIC) == 0,
+                 mError = OT_ERROR_SECURITY);
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+                 mError = OT_ERROR_SECURITY);
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_INTEGER) == 0,
+                 mError = OT_ERROR_SECURITY);
+
+    mMessagePointer += mSequenceLength;
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+                 mError = OT_ERROR_SECURITY);
+
+    VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
+                                      &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
                  mError = OT_ERROR_SECURITY);
 
     VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
@@ -391,6 +383,8 @@ otError Client::CmsReadSignedData(uint8_t       *aMessage,
                         EST_ASN1_OID_PKCS7_DATA,
                         mSequenceLength) == 0,
                  mError = OT_ERROR_SECURITY);
+
+    mMessagePointer += mSequenceLength;
 
     VerifyOrExit(mbedtls_asn1_get_tag(&mMessagePointer, mMessageEnd,
                                       &mSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_CONTEXT_SPECIFIC) == 0,
@@ -418,10 +412,14 @@ void Client::SimpleEnrollResponseHandler(otMessage *          aMessage,
     OT_UNUSED_VARIABLE(aMessageInfo);
 
     otCoapCode mCoapCode = otCoapMessageGetCode(aMessage);
+    otEstType mType = OT_EST_TYPE_SIMPLE_ENROLL;
     uint8_t mMessage[CSR_BUFFER_SIZE + 1] = {0};
     uint32_t mMessageLength = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
     uint8_t *mPayload = NULL;
     uint32_t mPayloadLength = 0;
+    mbedtls_x509_crt mCertificate;
+
+    mbedtls_x509_crt_init(&mCertificate);
 
     VerifyOrExit(aResult == OT_ERROR_NONE, mMessageLength = 0);
 
@@ -440,6 +438,11 @@ void Client::SimpleEnrollResponseHandler(otMessage *          aMessage,
                                                               &mPayload,
                                                               &mPayloadLength));
 
+            // Check if payload is a valid x509 certificate
+            VerifyOrExit(mbedtls_x509_crt_parse_der(&mCertificate,
+                                                    (unsigned char*)mPayload,
+                                                    mPayloadLength) == 0, mType = OT_EST_TYPE_INVALID_CERT);
+
             mIsEnrolled = true;
             break;
 
@@ -450,7 +453,9 @@ void Client::SimpleEnrollResponseHandler(otMessage *          aMessage,
     }
 
 exit:
-    mResponseCallback(aResult, OT_EST_TYPE_SIMPLE_ENROLL, mPayload, mPayloadLength, mApplicationContext);
+    mbedtls_x509_crt_free(&mCertificate);
+
+    mResponseCallback(aResult, mType, mPayload, mPayloadLength, mApplicationContext);
 }
 
 void Client::SimpleReEnrollResponseHandler(void *               aContext,
@@ -468,10 +473,14 @@ void Client::SimpleReEnrollResponseHandler(otMessage *          aMessage,
     OT_UNUSED_VARIABLE(aMessageInfo);
 
     otCoapCode mCoapCode = otCoapMessageGetCode(aMessage);
+    otEstType mType = OT_EST_TYPE_SIMPLE_REENROLL;
     uint8_t mMessage[CSR_BUFFER_SIZE + 1] = {0};
     uint32_t mMessageLength = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
     uint8_t *mPayload = NULL;
     uint32_t mPayloadLength = 0;
+    mbedtls_x509_crt mCertificate;
+
+    mbedtls_x509_crt_init(&mCertificate);
 
     VerifyOrExit(aResult == OT_ERROR_NONE, mMessageLength = 0);
 
@@ -485,7 +494,15 @@ void Client::SimpleReEnrollResponseHandler(otMessage *          aMessage,
             mMessage[mMessageLength] = '\0';
             otMessageRead(aMessage, otMessageGetOffset(aMessage), mMessage, mMessageLength);
 
-            aResult = Client::CmsReadSignedData(mMessage, mMessageLength, &mPayload, &mPayloadLength);
+            SuccessOrExit(aResult = Client::CmsReadSignedData(mMessage,
+                                                              mMessageLength,
+                                                              &mPayload,
+                                                              &mPayloadLength));
+
+            // Check if payload is a valid x509 certificate
+            VerifyOrExit(mbedtls_x509_crt_parse_der(&mCertificate,
+                                                    (unsigned char*)mPayload,
+                                                    mPayloadLength) == 0, mType = OT_EST_TYPE_INVALID_CERT);
             break;
 
         default:
@@ -495,7 +512,9 @@ void Client::SimpleReEnrollResponseHandler(otMessage *          aMessage,
     }
 
 exit:
-    mResponseCallback(aResult, OT_EST_TYPE_SIMPLE_REENROLL, mPayload, mPayloadLength, mApplicationContext);
+    mbedtls_x509_crt_free(&mCertificate);
+
+    mResponseCallback(aResult, mType, mPayload, mPayloadLength, mApplicationContext);
 }
 
 } // namespace Est

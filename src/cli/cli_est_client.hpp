@@ -98,10 +98,16 @@ private:
     static const Command sCommands[];
     Interpreter &        mInterpreter;
     bool                 mStopFlag;
+    uint32_t             mPrivateKeyTempLength;
+    uint32_t             mPublicKeyTempLength;
     uint32_t             mPrivateKeyLength;
     uint32_t             mPublicKeyLength;
+    uint32_t             mOpCertificateLength;
+    uint8_t              mPrivateKeyTemp[512];
+    uint8_t              mPublicKeyTemp[512];
     uint8_t              mPrivateKey[512];
     uint8_t              mPublicKey[512];
+    uint8_t              mOpCertificate[1024];
 };
 
 } // namespace Cli
