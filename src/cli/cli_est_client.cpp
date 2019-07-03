@@ -61,11 +61,17 @@ const struct EstClient::Command EstClient::sCommands[] = {
 EstClient::EstClient(Interpreter &aInterpreter)
     : mInterpreter(aInterpreter)
     , mStopFlag(false)
+    , mPrivateKeyTempLength(0)
+    , mPublicKeyTempLength(0)
     , mPrivateKeyLength(0)
     , mPublicKeyLength(0)
+    , mOpCertificateLength(0)
 {
+    memset(mPrivateKeyTemp, 0, sizeof(mPrivateKeyTemp));
+    memset(mPublicKeyTemp, 0, sizeof(mPublicKeyTemp));
     memset(mPrivateKey, 0, sizeof(mPrivateKey));
     memset(mPublicKey, 0, sizeof(mPublicKey));
+    memset(mOpCertificate, 0, sizeof(mOpCertificate));
 }
 
 otError EstClient::ProcessHelp(int argc, char *argv[])
@@ -108,6 +114,18 @@ otError EstClient::ProcessStop(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
+
+    memset(mPrivateKeyTemp, 0, sizeof(mPrivateKeyTemp));
+    memset(mPublicKeyTemp, 0, sizeof(mPublicKeyTemp));
+    memset(mPrivateKey, 0, sizeof(mPrivateKey));
+    memset(mPublicKey, 0, sizeof(mPublicKey));
+    memset(mOpCertificate, 0, sizeof(mOpCertificate));
+    mPrivateKeyTempLength = 0;
+    mPublicKeyTempLength = 0;
+    mPrivateKeyLength = 0;
+    mPublicKeyLength = 0;
+    mOpCertificateLength = 0;
+
     if (otEstClientIsConnected(mInterpreter.mInstance))
     {
         otEstClientDisconnect(mInterpreter.mInstance);
@@ -158,12 +176,21 @@ otError EstClient::ProcessConnect(int argc, char *argv[])
     }
 
     SuccessOrExit(mError = otEstClientSetCaCertificateChain(mInterpreter.mInstance,
-                                                            (const uint8_t *)OT_CLI_COAPS_TRUSTED_ROOT_CERTIFICATE,
-                                                            sizeof(OT_CLI_COAPS_TRUSTED_ROOT_CERTIFICATE)));
+                                                            (const uint8_t *)OT_CLI_EST_CLIENT_TRUSTED_ROOT_CERTIFICATE,
+                                                            sizeof(OT_CLI_EST_CLIENT_TRUSTED_ROOT_CERTIFICATE)));
 
-    SuccessOrExit(mError = otEstClientSetCertificate(
-                      mInterpreter.mInstance, (const uint8_t *)OT_CLI_COAPS_X509_CERT, sizeof(OT_CLI_COAPS_X509_CERT),
-                      (const uint8_t *)OT_CLI_COAPS_PRIV_KEY, sizeof(OT_CLI_COAPS_PRIV_KEY)));
+    if(mOpCertificate[0] == 0)
+    {
+        SuccessOrExit(mError = otEstClientSetCertificate(
+                          mInterpreter.mInstance, (const uint8_t *)OT_CLI_EST_CLIENT_X509_CERT, sizeof(OT_CLI_EST_CLIENT_X509_CERT),
+                          (const uint8_t *)OT_CLI_EST_CLIENT_PRIV_KEY, sizeof(OT_CLI_EST_CLIENT_PRIV_KEY)));
+    }
+    else
+    {
+        SuccessOrExit(mError = otEstClientSetCertificate(
+                      mInterpreter.mInstance, mOpCertificate, mOpCertificateLength,
+                      mPrivateKey, mPrivateKeyLength));
+    }
 
     SuccessOrExit(mError = otEstClientConnect(mInterpreter.mInstance, &mServerAddress, &EstClient::HandleConnected,
                                               &EstClient::HandleResponse, this));
@@ -190,15 +217,16 @@ otError EstClient::ProcessSimpleEnroll(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    VerifyOrExit(otCoapSecureIsConnected(mInterpreter.mInstance), mError = OT_ERROR_INVALID_STATE);
+    memset(mPrivateKeyTemp, 0, sizeof(mPrivateKeyTemp));
+    memset(mPublicKeyTemp, 0, sizeof(mPublicKeyTemp));
+    mPrivateKeyTempLength = sizeof(mPrivateKeyTemp);
+    mPublicKeyTempLength  = sizeof(mPublicKeyTemp);
 
-    mPrivateKeyLength = sizeof(mPrivateKey);
-    mPublicKeyLength  = sizeof(mPublicKey);
-
-    mError = otCryptoEcpGenenrateKey(NULL, 0, mPrivateKey, &mPrivateKeyLength, mPublicKey, &mPublicKeyLength);
+    mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength,
+                                     mPublicKeyTemp, &mPublicKeyTempLength);
     VerifyOrExit(mError == OT_ERROR_NONE);
-    mError = otEstClientSimpleEnroll(mInterpreter.mInstance, mPrivateKey, mPrivateKeyLength, mPublicKey,
-                                     mPublicKeyLength, OT_MD_TYPE_SHA256, mKeyUsageFlags, true);
+    mError = otEstClientSimpleEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength,
+                                     OT_MD_TYPE_SHA256, mKeyUsageFlags);
     VerifyOrExit(mError == OT_ERROR_NONE);
 
 exit:
@@ -214,15 +242,18 @@ otError EstClient::ProcessSimpleReEnroll(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    VerifyOrExit(otCoapSecureIsConnected(mInterpreter.mInstance), mError = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(mOpCertificate[0] != 0, mError = OT_ERROR_INVALID_STATE);
 
-    mPrivateKeyLength = sizeof(mPrivateKey);
-    mPublicKeyLength  = sizeof(mPublicKey);
+    memset(mPrivateKeyTemp, 0, sizeof(mPrivateKeyTemp));
+    memset(mPublicKeyTemp, 0, sizeof(mPublicKeyTemp));
+    mPrivateKeyTempLength = sizeof(mPrivateKeyTemp);
+    mPublicKeyTempLength  = sizeof(mPublicKeyTemp);
 
-    mError = otCryptoEcpGenenrateKey(NULL, 0, mPrivateKey, &mPrivateKeyLength, mPublicKey, &mPublicKeyLength);
+    mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength,
+                                     mPublicKeyTemp, &mPublicKeyTempLength);
     VerifyOrExit(mError == OT_ERROR_NONE);
-    mError = otEstClientSimpleReEnroll(mInterpreter.mInstance, mPrivateKey, mPrivateKeyLength, mPublicKey,
-                                       mPublicKeyLength, OT_MD_TYPE_SHA256, mKeyUsageFlags, true);
+    mError = otEstClientSimpleReEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength,
+                                       OT_MD_TYPE_SHA256, mKeyUsageFlags);
     VerifyOrExit(mError == OT_ERROR_NONE);
 
 exit:
@@ -288,12 +319,10 @@ void EstClient::HandleResponse(otError   aError,
 
 void EstClient::HandleResponse(otError aError, otEstType aType, uint8_t *aPayload, uint32_t aPayloadLength)
 {
-    OT_UNUSED_VARIABLE(aPayload);
-    OT_UNUSED_VARIABLE(aPayloadLength);
-
     if (aError != OT_ERROR_NONE)
     {
         mInterpreter.mServer->OutputFormat("error");
+        ExitNow();
     }
 
     switch (aType)
@@ -305,14 +334,34 @@ void EstClient::HandleResponse(otError aError, otEstType aType, uint8_t *aPayloa
     case OT_EST_TYPE_SERVER_SIDE_KEY:
         break;
     case OT_EST_TYPE_SIMPLE_ENROLL:
-        break;
     case OT_EST_TYPE_SIMPLE_REENROLL:
+        if(aPayloadLength <= 1024)
+        {
+            memset(mPrivateKey, 0, sizeof(mPrivateKey));
+            memcpy(mPrivateKey, mPrivateKeyTemp, mPrivateKeyTempLength);
+            mPrivateKeyLength = mPrivateKeyTempLength;
+
+
+            memset(mPublicKey, 0, sizeof(mPublicKey));
+            memcpy(mPublicKey, mPublicKeyTemp, mPublicKeyTempLength);
+            mPublicKeyLength = mPublicKeyTempLength;
+
+            memset(mOpCertificate, 0, sizeof(mOpCertificate));
+            memcpy(mOpCertificate, aPayload, aPayloadLength);
+            mOpCertificateLength = aPayloadLength;
+        }
+        else
+        {
+            mInterpreter.mServer->OutputFormat("error certificate too long");
+        }
         break;
     case OT_EST_TYPE_INVALID_CERT:
     case OT_EST_TYPE_INVALID_KEY:
     default:
         mInterpreter.mServer->OutputFormat("error param");
     }
+
+exit:
     mInterpreter.mServer->OutputFormat("response\r\n");
 }
 

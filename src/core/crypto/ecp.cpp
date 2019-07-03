@@ -49,9 +49,7 @@ namespace Crypto {
 
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
-otError Ecp::KeyPairGeneration(const uint8_t *aPersonalSeed,
-                               uint32_t       aPersonalSeedLength,
-                               uint8_t *      aPrivateKey,
+otError Ecp::KeyPairGeneration(uint8_t *      aPrivateKey,
                                uint32_t *     aPrivateKeyLength,
                                uint8_t *      aPublicKey,
                                uint32_t *     aPublicKeyLength)
@@ -59,13 +57,10 @@ otError Ecp::KeyPairGeneration(const uint8_t *aPersonalSeed,
     otError error = OT_ERROR_NONE;
     mbedtls_pk_context keypair;
 
-    OT_UNUSED_VARIABLE(aPersonalSeed);
-    OT_UNUSED_VARIABLE(aPersonalSeedLength);
-
     mbedtls_pk_init(&keypair);
 
     // Generate keypair
-    VerifyOrExit(mbedtls_pk_setup(&keypair, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)),
+    VerifyOrExit(mbedtls_pk_setup(&keypair, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)) == 0,
                  error = OT_ERROR_FAILED);
 
     VerifyOrExit(mbedtls_ecp_group_load(&mbedtls_pk_ec(keypair)->grp, MBEDTLS_ECP_DP_SECP256R1) == 0,
@@ -83,6 +78,9 @@ otError Ecp::KeyPairGeneration(const uint8_t *aPersonalSeed,
     VerifyOrExit(mbedtls_pk_write_key_pem(&keypair, (unsigned char*)aPrivateKey,
                                           *aPrivateKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
+
+    *aPublicKeyLength = strlen((char*)aPublicKey) + 1;
+    *aPrivateKeyLength = strlen((char*)aPrivateKey) + 1;
 
 exit:
     mbedtls_pk_free(&keypair);

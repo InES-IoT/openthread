@@ -146,11 +146,8 @@ public:
      *
      * @param[in]  aPrivateKey        A pointer to a buffer that contains the EC private key.
      * @param[in]  aPrivateLeyLength  The length of the buffer @p aPrivateKey
-     * @param[in]  aPublicKey         A pointer to a buffer that contains the EC public key.
-     * @param[in]  aPublicKeyLength   The length of the buffer @p aPublicKey
      * @param[in]  aMdType            The message digest type to be used for simple enrollment.
      * @param[in]  aKeyUsageFlags     Flags for defining key usage. Refer OT_EST_KEY_USAGE_*
-     * @param[in]  aPemFormat         true for PEM formatted X.509 certificate, false for DER format.
      *
      * @retval OT_ERROR_NONE           Successfully sent request.
      * @retval OT_ERROR_NO_BUFS        Failed to allocate retransmission data.
@@ -159,22 +156,16 @@ public:
      */
     otError SimpleEnroll(const uint8_t *aPrivateKey,
                          uint32_t       aPrivateLeyLength,
-                         const uint8_t *aPublicKey,
-                         uint32_t       aPublicKeyLength,
                          otMdType       aMdType,
-                         uint8_t        aKeyUsageFlags,
-                         bool           aPemFormat);
+                         uint8_t        aKeyUsageFlags);
 
     /**
      * This method process a simple re-enrollment over CoAP Secure.
      *
      * @param[in]  aPrivateKey        A pointer to a buffer that contains the EC private key.
      * @param[in]  aPrivateLeyLength  The length of the buffer @p aPrivateKey
-     * @param[in]  aPublicKey         A pointer to a buffer that contains the EC public key.
-     * @param[in]  aPublicKeyLength   The length of the buffer @p aPublicKey
      * @param[in]  aMdType            The message digest type to be used for simple enrollment.
      * @param[in]  aKeyUsageFlags     Flags for defining key usage. Refer OT_EST_KEY_USAGE_*
-     * @param[in]  aPemFormat         true for PEM formatted X.509 certificate, false for DER format.
      *
      * @retval OT_ERROR_NONE           Successfully sent request.
      * @retval OT_ERROR_NO_BUFS        Failed to allocate retransmission data.
@@ -183,11 +174,8 @@ public:
      */
     otError SimpleReEnroll(const uint8_t *aPrivateKey,
                            uint32_t       aPrivateLeyLength,
-                           const uint8_t *aPublicKey,
-                           uint32_t       aPublicKeyLength,
                            otMdType       aMdType,
-                           uint8_t        aKeyUsageFlags,
-                           bool           aPemFormat);
+                           uint8_t        aKeyUsageFlags);
 
     /**
      * ToDo: Optionally
