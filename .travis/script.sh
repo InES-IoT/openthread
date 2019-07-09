@@ -64,6 +64,7 @@ python --version || die
         --enable-dns-client               \
         --enable-ecdsa                    \
         --enable-est-client               \
+        --enable-executable=no            \
         --enable-ftd                      \
         --enable-jam-detection            \
         --enable-joiner                   \
