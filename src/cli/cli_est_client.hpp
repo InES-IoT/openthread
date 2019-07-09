@@ -95,6 +95,8 @@ private:
                                void *    aContext);
     void        HandleResponse(otError aError, otEstType aType, uint8_t *aPayload, uint32_t aPayloadLenth);
 
+    void CleanUpTemporaryBuffer(void);
+
     static const Command sCommands[];
     Interpreter &        mInterpreter;
     bool                 mStopFlag;

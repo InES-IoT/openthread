@@ -61,9 +61,6 @@ extern "C" {
 #define OT_EST_COAPS_DEFAULT_EST_SERVER_IP6 "2001:620:190:ffa1:21b:21ff:fe70:9240"
 #define OT_EST_COAPS_DEFAULT_EST_SERVER_PORT 5684
 
-/**
- * ToDo: bring down to a lower layer
- */
 #define OT_EST_COAPS_SHORT_URI_CA_CERTS ".well-known/est/crts"        ///< Specified in draft-ietf-ace-coap-est-12
 #define OT_EST_COAPS_SHORT_URI_SIMPLE_ENROLL ".well-known/est/sen"    ///< Specified in draft-ietf-ace-coap-est-12
 #define OT_EST_COAPS_SHORT_URI_SIMPLE_REENROLL ".well-known/est/sren" ///< Specified in draft-ietf-ace-coap-est-12
@@ -88,6 +85,7 @@ extern "C" {
  */
 typedef enum otEstType
 {
+    OT_EST_TYPE_NONE,
     OT_EST_TYPE_SIMPLE_ENROLL,
     OT_EST_TYPE_SIMPLE_REENROLL,
     OT_EST_TYPE_CA_CERTS,
@@ -102,11 +100,11 @@ typedef enum otEstType
  */
 typedef enum otMdType
 {
-    OT_MD_TYPE_NONE = 0,
-    OT_MD_TYPE_MD5 = MBEDTLS_MD_MD5,
-    OT_MD_TYPE_SHA256 = MBEDTLS_MD_SHA256,
-    OT_MD_TYPE_SHA384 = MBEDTLS_MD_SHA384,
-    OT_MD_TYPE_SHA512 = MBEDTLS_MD_SHA512,
+    OT_MD_TYPE_NONE      = 0,
+    OT_MD_TYPE_MD5       = MBEDTLS_MD_MD5,
+    OT_MD_TYPE_SHA256    = MBEDTLS_MD_SHA256,
+    OT_MD_TYPE_SHA384    = MBEDTLS_MD_SHA384,
+    OT_MD_TYPE_SHA512    = MBEDTLS_MD_SHA512,
     OT_MD_TYPE_RIPEMD160 = MBEDTLS_MD_RIPEMD160
 } otMdType;
 

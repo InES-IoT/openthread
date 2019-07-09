@@ -49,19 +49,17 @@ namespace Crypto {
 
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
-otError Ecp::KeyPairGeneration(uint8_t *      aPrivateKey,
-                               uint32_t *     aPrivateKeyLength,
-                               uint8_t *      aPublicKey,
-                               uint32_t *     aPublicKeyLength)
+otError Ecp::KeyPairGeneration(uint8_t * aPrivateKey,
+                               uint32_t *aPrivateKeyLength,
+                               uint8_t * aPublicKey,
+                               uint32_t *aPublicKeyLength)
 {
-    otError error = OT_ERROR_NONE;
+    otError            error = OT_ERROR_NONE;
     mbedtls_pk_context keypair;
 
     mbedtls_pk_init(&keypair);
 
-    // Generate keypair
-    VerifyOrExit(mbedtls_pk_setup(&keypair, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)) == 0,
-                 error = OT_ERROR_FAILED);
+    VerifyOrExit(mbedtls_pk_setup(&keypair, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)) == 0, error = OT_ERROR_FAILED);
 
     VerifyOrExit(mbedtls_ecp_group_load(&mbedtls_pk_ec(keypair)->grp, MBEDTLS_ECP_DP_SECP256R1) == 0,
                  error = OT_ERROR_FAILED);
@@ -71,16 +69,14 @@ otError Ecp::KeyPairGeneration(uint8_t *      aPrivateKey,
                                          Random::Crypto::MbedTlsContextGet()) == 0,
                  error = OT_ERROR_FAILED);
 
-    VerifyOrExit(mbedtls_pk_write_pubkey_pem(&keypair, (unsigned char*)aPublicKey,
-                                             *aPublicKeyLength) == 0,
+    VerifyOrExit(mbedtls_pk_write_pubkey_pem(&keypair, (unsigned char *)aPublicKey, *aPublicKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
 
-    VerifyOrExit(mbedtls_pk_write_key_pem(&keypair, (unsigned char*)aPrivateKey,
-                                          *aPrivateKeyLength) == 0,
+    VerifyOrExit(mbedtls_pk_write_key_pem(&keypair, (unsigned char *)aPrivateKey, *aPrivateKeyLength) == 0,
                  error = OT_ERROR_INVALID_ARGS);
 
-    *aPublicKeyLength = strlen((char*)aPublicKey) + 1;
-    *aPrivateKeyLength = strlen((char*)aPrivateKey) + 1;
+    *aPublicKeyLength  = strlen((char *)aPublicKey) + 1;
+    *aPrivateKeyLength = strlen((char *)aPrivateKey) + 1;
 
 exit:
     mbedtls_pk_free(&keypair);

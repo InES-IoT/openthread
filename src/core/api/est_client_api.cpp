@@ -111,8 +111,7 @@ otError otEstClientSimpleEnroll(otInstance *   aInstance,
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
-    return instance.Get<Est::Client>().SimpleEnroll(aPrivateKey, aPrivateLeyLength,
-                                                    aMdType, aKeyUsageFlags);
+    return instance.Get<Est::Client>().SimpleEnroll(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags);
 }
 
 otError otEstClientSimpleReEnroll(otInstance *   aInstance,
@@ -123,8 +122,7 @@ otError otEstClientSimpleReEnroll(otInstance *   aInstance,
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
-    return instance.Get<Est::Client>().SimpleReEnroll(aPrivateKey, aPrivateLeyLength,
-                                                      aMdType, aKeyUsageFlags);
+    return instance.Get<Est::Client>().SimpleReEnroll(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags);
 }
 
 otError otEstClientGetCsrAttributes(otInstance *aInstance)

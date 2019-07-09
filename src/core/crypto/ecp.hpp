@@ -69,10 +69,10 @@ public:
      * @retval  OT_ERROR_NONE       EC key pairs has been created successfully.
      *          OT_ERROR_NO_BUFS    Key buffers are too small or mbedtls heap too small.
      */
-    static otError KeyPairGeneration(uint8_t *      aPrivateKey,
-                                     uint32_t *     aPrivateKeyLength,
-                                     uint8_t *      aPublicKey,
-                                     uint32_t *     aPublicKeyLength);
+    static otError KeyPairGeneration(uint8_t * aPrivateKey,
+                                     uint32_t *aPrivateKeyLength,
+                                     uint8_t * aPublicKey,
+                                     uint32_t *aPublicKeyLength);
 };
 
 /**
