@@ -73,6 +73,7 @@ python --version || die
         --enable-ecdsa                    \
         --enable-executable=no            \
         --enable-est-client               \
+        --enable-executable=no            \
         --enable-ftd                      \
         --enable-jam-detection            \
         --enable-joiner                   \
