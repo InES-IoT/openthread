@@ -866,6 +866,37 @@ AM_CONDITIONAL([OPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC], [test "${enable_mtd_n
 AC_DEFINE_UNQUOTED([OPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC],[${OPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC}],[Define to 1 to enable network diagnostic for MTD.])
 
 #
+# EST Client
+#
+
+AC_ARG_ENABLE(est_client,
+    [AS_HELP_STRING([--enable-est-client],[Enable EST client support @<:@default=no@:>@.])],
+    [
+        case "${enableval}" in
+
+        no|yes)
+            enable_est_client=${enableval}
+            ;;
+
+        *)
+            AC_MSG_ERROR([Invalid value ${enable_est_client} for --enable-est-client])
+            ;;
+        esac
+    ],
+    [enable_est_client=no])
+
+if test "$enable_est_client" = "yes"; then
+    OPENTHREAD_ENABLE_EST_CLIENT=1
+    enable_application_coap_secure="yes"
+else
+    OPENTHREAD_ENABLE_EST_CLIENT=0
+fi
+
+AC_SUBST(OPENTHREAD_ENABLE_EST_CLIENT)
+AM_CONDITIONAL([OPENTHREAD_ENABLE_EST_CLIENT], [test "${enable_est_client}" = "yes"])
+AC_DEFINE_UNQUOTED([OPENTHREAD_ENABLE_EST_CLIENT],[${OPENTHREAD_ENABLE_EST_CLIENT}],[Define to 1 if you want to enable EST Client])
+
+#
 # Application CoAP Secure
 #
 
@@ -879,7 +910,7 @@ AC_ARG_ENABLE(application_coap_secure,
             ;;
 
         *)
-            AC_MSG_ERROR([Invalid value ${enable_application_coap_secure} for --enable-application-coap_secure])
+            AC_MSG_ERROR([Invalid value ${enable_application_coap_secure} for --enable-application-coap-secure])
             ;;
         esac
     ],
@@ -1460,36 +1491,6 @@ fi
 AC_SUBST(OPENTHREAD_ENABLE_DNS_CLIENT)
 AM_CONDITIONAL([OPENTHREAD_ENABLE_DNS_CLIENT], [test "${enable_dns_client}" = "yes"])
 AC_DEFINE_UNQUOTED([OPENTHREAD_ENABLE_DNS_CLIENT],[${OPENTHREAD_ENABLE_DNS_CLIENT}],[Define to 1 if you want to enable DNS Client])
-
-#
-# EST Client
-#
-
-AC_ARG_ENABLE(est_client,
-    [AS_HELP_STRING([--enable-est-client],[Enable EST client support @<:@default=no@:>@.])],
-    [
-        case "${enableval}" in
-
-        no|yes)
-            enable_est_client=${enableval}
-            ;;
-
-        *)
-            AC_MSG_ERROR([Invalid value ${enable_est_client} for --enable-est-client])
-            ;;
-        esac
-    ],
-    [enable_est_client=no])
-
-if test "$enable_est_client" = "yes"; then
-    OPENTHREAD_ENABLE_EST_CLIENT=1
-else
-    OPENTHREAD_ENABLE_EST_CLIENT=0
-fi
-
-AC_SUBST(OPENTHREAD_ENABLE_EST_CLIENT)
-AM_CONDITIONAL([OPENTHREAD_ENABLE_EST_CLIENT], [test "${enable_est_client}" = "yes"])
-AC_DEFINE_UNQUOTED([OPENTHREAD_ENABLE_EST_CLIENT],[${OPENTHREAD_ENABLE_EST_CLIENT}],[Define to 1 if you want to enable EST Client])
 
 #
 # SNTP Client

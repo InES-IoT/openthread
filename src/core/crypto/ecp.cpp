@@ -41,30 +41,45 @@
 #include "common/debug.hpp"
 #include "common/random.hpp"
 
+#include "openthread/entropy.h"
+#include "openthread/random_crypto.h"
+
 namespace ot {
 namespace Crypto {
 
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
-otError Ecp::KeyPairGeneration(const uint8_t *aPersonalSeed,
-                               uint32_t       aPersonalSeedLength,
-                               uint8_t *      aPrivateKey,
-                               uint32_t *     aPrivateKeyLength,
-                               uint8_t *      aPublicKey,
-                               uint32_t *     aPublicKeyLength)
+otError Ecp::KeyPairGeneration(uint8_t * aPrivateKey,
+                               uint32_t *aPrivateKeyLength,
+                               uint8_t * aPublicKey,
+                               uint32_t *aPublicKeyLength)
 {
-    OT_UNUSED_VARIABLE(aPersonalSeed);
-    OT_UNUSED_VARIABLE(aPersonalSeedLength);
-    OT_UNUSED_VARIABLE(aPrivateKey);
-    OT_UNUSED_VARIABLE(aPrivateKeyLength);
-    OT_UNUSED_VARIABLE(aPublicKey);
-    OT_UNUSED_VARIABLE(aPublicKeyLength);
+    otError            error = OT_ERROR_NONE;
+    mbedtls_pk_context keypair;
 
-    otError error = OT_ERROR_NOT_IMPLEMENTED;
+    mbedtls_pk_init(&keypair);
 
-    VerifyOrExit(error);
+    VerifyOrExit(mbedtls_pk_setup(&keypair, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)) == 0, error = OT_ERROR_FAILED);
+
+    VerifyOrExit(mbedtls_ecp_group_load(&mbedtls_pk_ec(keypair)->grp, MBEDTLS_ECP_DP_SECP256R1) == 0,
+                 error = OT_ERROR_FAILED);
+
+    VerifyOrExit(mbedtls_ecp_gen_keypair(&mbedtls_pk_ec(keypair)->grp, &mbedtls_pk_ec(keypair)->d,
+                                         &mbedtls_pk_ec(keypair)->Q, mbedtls_ctr_drbg_random,
+                                         Random::Crypto::MbedTlsContextGet()) == 0,
+                 error = OT_ERROR_FAILED);
+
+    VerifyOrExit(mbedtls_pk_write_pubkey_pem(&keypair, (unsigned char *)aPublicKey, *aPublicKeyLength) == 0,
+                 error = OT_ERROR_INVALID_ARGS);
+
+    VerifyOrExit(mbedtls_pk_write_key_pem(&keypair, (unsigned char *)aPrivateKey, *aPrivateKeyLength) == 0,
+                 error = OT_ERROR_INVALID_ARGS);
+
+    *aPublicKeyLength  = strlen((char *)aPublicKey) + 1;
+    *aPrivateKeyLength = strlen((char *)aPrivateKey) + 1;
 
 exit:
+    mbedtls_pk_free(&keypair);
 
     return error;
 }
