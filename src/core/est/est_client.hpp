@@ -200,28 +200,23 @@ private:
 
     static void CoapSecureConnectedHandle(bool aConnected, void *aContext);
     void        CoapSecureConnectedHandle(bool aConnected);
-    otError     CmsReadSignedData(uint8_t       *aMessage,
-                                  uint32_t       aMessageLength,
-                                  uint8_t      **aPayload,
-                                  uint32_t      *aPayloadLength);
+    otError CmsReadSignedData(uint8_t *aMessage, uint32_t aMessageLength, uint8_t **aPayload, uint32_t *aPayloadLength);
+    otError WriteCsr(const uint8_t *aPrivateKey,
+                     size_t         aPrivateLeyLength,
+                     otMdType       aMdType,
+                     uint8_t        aKeyUsageFlags,
+                     uint8_t *      aOutput,
+                     size_t *       aOutputLength);
     static void SimpleEnrollResponseHandler(void *               aContext,
                                             otMessage *          aMessage,
                                             const otMessageInfo *aMessageInfo,
                                             otError              aResult);
-    void        SimpleEnrollResponseHandler(otMessage *          aMessage,
-                                            const otMessageInfo *aMessageInfo,
-                                            otError              aResult);
-    static void SimpleReEnrollResponseHandler(void *               aContext,
-                                              otMessage *          aMessage,
-                                              const otMessageInfo *aMessageInfo,
-                                              otError              aResult);
-    void        SimpleReEnrollResponseHandler(otMessage *          aMessage,
-                                              const otMessageInfo *aMessageInfo,
-                                              otError              aResult);
+    void        SimpleEnrollResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult);
 
     bool                      mIsConnected;
     bool                      mStarted;
     bool                      mVerifyEstServerCertificate;
+    bool                      mIsEnroll;
     bool                      mIsEnrolled;
     void *                    mApplicationContext;
     otHandleEstClientConnect  mConnectCallback;

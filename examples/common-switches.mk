@@ -132,7 +132,7 @@ configure_OPTIONS              += --enable-ecdsa
 endif
 
 ifeq ($(EST_CLIENT),1)
-configure_OPTIONS              += --enable-est-client --enable-application-coap-secure
+configure_OPTIONS              += --enable-est-client
 endif
 
 ifeq ($(JAM_DETECTION),1)

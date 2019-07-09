@@ -98,10 +98,10 @@ exit:
 
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
-otError otCryptoEcpGenenrateKey(uint8_t *      aPrivateKey,
-                                uint32_t *     aPrivateKeyLength,
-                                uint8_t *      aPublicKey,
-                                uint32_t *     aPublicKeyLength)
+otError otCryptoEcpGenenrateKey(uint8_t * aPrivateKey,
+                                uint32_t *aPrivateKeyLength,
+                                uint8_t * aPublicKey,
+                                uint32_t *aPublicKeyLength)
 {
     assert((aPrivateKey != NULL) && (aPrivateKeyLength != NULL) && (aPublicKey != NULL) && (aPublicKeyLength != NULL));
 

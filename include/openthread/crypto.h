@@ -138,10 +138,10 @@ otError otCryptoEcdsaSign(uint8_t *      aOutput,
  * @retval  OT_ERROR_NONE       EC key pairs has been created successfully.
  *          OT_ERROR_NO_BUFS    Key buffers are too small or mbedtls heap too small.
  */
-otError otCryptoEcpGenenrateKey(uint8_t *      aPrivateKey,
-                                uint32_t *     aPrivateKeyLength,
-                                uint8_t *      aPublicKey,
-                                uint32_t *     aPublicKeyLength);
+otError otCryptoEcpGenenrateKey(uint8_t * aPrivateKey,
+                                uint32_t *aPrivateKeyLength,
+                                uint8_t * aPublicKey,
+                                uint32_t *aPublicKeyLength);
 
 /**
  * @}
