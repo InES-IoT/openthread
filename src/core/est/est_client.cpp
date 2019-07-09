@@ -149,16 +149,16 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
                              otMdType       aMdType,
                              uint8_t        aKeyUsageFlags)
 {
-    otError               error = OT_ERROR_NONE;
-    uint8_t               buffer[CSR_BUFFER_SIZE] = {0};
-    size_t                bufferLength            = CSR_BUFFER_SIZE;
-    uint8_t *             bufferPointer           = NULL;
-    Coap::Message *       mCoapMessage            = NULL;
+    otError        error                   = OT_ERROR_NONE;
+    uint8_t        buffer[CSR_BUFFER_SIZE] = {0};
+    size_t         bufferLength            = CSR_BUFFER_SIZE;
+    uint8_t *      bufferPointer           = NULL;
+    Coap::Message *mCoapMessage            = NULL;
 
     VerifyOrExit(mIsConnected, error = OT_ERROR_INVALID_STATE);
 
-    SuccessOrExit(error = Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType,
-                                           aKeyUsageFlags, buffer, &bufferLength));
+    SuccessOrExit(error =
+                      Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags, buffer, &bufferLength));
 
     // The CSR is written at the end of the buffer, therefore the pointer is set to the begin of the CSR
     bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
@@ -189,16 +189,16 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
                                otMdType       aMdType,
                                uint8_t        aKeyUsageFlags)
 {
-    otError               error = OT_ERROR_NONE;
-    uint8_t               buffer[CSR_BUFFER_SIZE] = {0};
-    size_t                bufferLength            = CSR_BUFFER_SIZE;
-    uint8_t *             bufferPointer           = NULL;
-    Coap::Message *       mCoapMessage            = NULL;
+    otError        error                   = OT_ERROR_NONE;
+    uint8_t        buffer[CSR_BUFFER_SIZE] = {0};
+    size_t         bufferLength            = CSR_BUFFER_SIZE;
+    uint8_t *      bufferPointer           = NULL;
+    Coap::Message *mCoapMessage            = NULL;
 
     VerifyOrExit(mIsConnected && mIsEnrolled, error = OT_ERROR_INVALID_STATE);
 
-    SuccessOrExit(error = Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType,
-                                           aKeyUsageFlags, buffer, &bufferLength));
+    SuccessOrExit(error =
+                      Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags, buffer, &bufferLength));
 
     // The CSR is written at the end of the buffer, therefore the pointer is set to the begin of the CSR
     bufferPointer = buffer + (CSR_BUFFER_SIZE - bufferLength);
@@ -346,7 +346,7 @@ otError Client::WriteCsr(const uint8_t *aPrivateKey,
     otError               error = OT_ERROR_NONE;
     mbedtls_x509write_csr csr;
     mbedtls_pk_context    pkCtx;
-    uint8_t               nsCertType              = 0;
+    uint8_t               nsCertType = 0;
 
     mbedtls_x509write_csr_init(&csr);
     mbedtls_pk_init(&pkCtx);
@@ -419,7 +419,7 @@ void Client::SimpleEnrollResponseHandler(otMessage *aMessage, const otMessageInf
 
         mIsEnrolled = true;
 
-        if(mIsEnroll)
+        if (mIsEnroll)
         {
             mType = OT_EST_TYPE_SIMPLE_ENROLL;
         }
