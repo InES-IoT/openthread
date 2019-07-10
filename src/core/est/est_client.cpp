@@ -44,7 +44,6 @@
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
 #include "../common/asn1.hpp"
-#include "common/entropy.hpp"
 #include "common/random.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/mbedtls.hpp"
