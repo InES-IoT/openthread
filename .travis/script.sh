@@ -71,7 +71,6 @@ python --version || die
         --enable-diag                     \
         --enable-dns-client               \
         --enable-ecdsa                    \
-        --enable-executable=no            \
         --enable-est-client               \
         --enable-executable=no            \
         --enable-ftd                      \
