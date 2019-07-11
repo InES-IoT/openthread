@@ -54,12 +54,12 @@ endif
 ifeq ($(TARGET_PRODUCT),generic)
 OPENTHREAD_COMMON_FLAGS                                          += \
     -DOPENTHREAD_ENABLE_APPLICATION_COAP=1                          \
-    -DOPENTHREAD_ENABLE_CERT_LOG=1                                  \
     -DOPENTHREAD_ENABLE_COMMISSIONER=1                              \
     -DOPENTHREAD_ENABLE_DHCP6_CLIENT=1                              \
     -DOPENTHREAD_ENABLE_DHCP6_SERVER=1                              \
     -DOPENTHREAD_ENABLE_DNS_CLIENT=1                                \
     -DOPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC=1                    \
+    -DOPENTHREAD_ENABLE_REFERENCE_DEVICE=0                          \
     $(NULL)
 endif
 
@@ -124,6 +124,7 @@ LOCAL_SRC_FILES                                          := \
     src/core/api/message_api.cpp                            \
     src/core/api/netdata_api.cpp                            \
     src/core/api/random_crypto_api.cpp                      \
+    src/core/api/random_noncrypto_api.cpp                   \
     src/core/api/server_api.cpp                             \
     src/core/api/tasklet_api.cpp                            \
     src/core/api/thread_api.cpp                             \
