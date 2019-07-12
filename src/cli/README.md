@@ -23,6 +23,7 @@ OpenThread test scripts use the CLI to execute test cases.
 * [discover](#discover-channel)
 * [dns](#dns-resolve-hostname-dns-server-ip-dns-server-port)
 * [eidcache](#eidcache)
+* [est](README_EST_CLIENT.md)
 * [eui64](#eui64)
 * [extaddr](#extaddr)
 * [extpanid](#extpanid)
