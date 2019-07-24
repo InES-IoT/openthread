@@ -236,7 +236,7 @@ otError EstClient::ProcessSimpleEnroll(int argc, char *argv[])
     mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
     VerifyOrExit(mError == OT_ERROR_NONE);
     mError = otEstClientSimpleEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength, OT_MD_TYPE_SHA256,
-                                     mKeyUsageFlags);
+                                     mKeyUsageFlags, NULL, 0);
     VerifyOrExit(mError == OT_ERROR_NONE);
 
 exit:
@@ -259,7 +259,7 @@ otError EstClient::ProcessSimpleReEnroll(int argc, char *argv[])
     mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
     VerifyOrExit(mError == OT_ERROR_NONE);
     mError = otEstClientSimpleReEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength,
-                                       OT_MD_TYPE_SHA256, mKeyUsageFlags);
+                                       OT_MD_TYPE_SHA256, mKeyUsageFlags, NULL, 0);
     VerifyOrExit(mError == OT_ERROR_NONE);
 
 exit:
@@ -345,6 +345,9 @@ void EstClient::HandleResponse(otError aError, otEstType aType, uint8_t *aPayloa
 
             break;
         case OT_EST_TYPE_CSR_ATTR:
+            // test begin
+            mInterpreter.mServer->OutputFormat("%x256\r\n", aPayload);
+            // test end
             break;
         case OT_EST_TYPE_SERVER_SIDE_KEY:
             break;
