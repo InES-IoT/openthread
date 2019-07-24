@@ -53,6 +53,7 @@ const struct EstClient::Command EstClient::sCommands[] = {
     {"connect", &EstClient::ProcessConnect},
     {"disconnect", &EstClient::ProcessDisconnect},
     {"cacerts", &EstClient::ProcessGetCaCertificate},
+    {"csrattr", &EstClient::ProcessGetCaCertificate},
     {"enroll", &EstClient::ProcessSimpleEnroll},
     {"reenroll", &EstClient::ProcessSimpleReEnroll},
 
@@ -216,6 +217,20 @@ otError EstClient::ProcessGetCaCertificate(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argv);
 
     mError = otEstClientGetCaCertificates(mInterpreter.mInstance);
+    VerifyOrExit(mError == OT_ERROR_NONE);
+
+exit:
+
+    return mError;
+}
+otError EstClient::ProcessGetCsrAttributes(int argc, char *argv[])
+{
+    otError mError;
+
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    mError = otEstClientGetCsrAttributes(mInterpreter.mInstance);
     VerifyOrExit(mError == OT_ERROR_NONE);
 
 exit:
