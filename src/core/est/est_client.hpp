@@ -127,6 +127,23 @@ public:
                     void *                    aContext);
 
     /**
+     * This method prints CSR attributes in ASN.1 format to a human readable string.
+     *
+     * @param[in]   aData           A pointer to the beginning of the ASN.1 formatted CSR attributes data.
+     * @param[in]   aDataEnd        A pointer to the end of the ASN.1 formatted CSR attributes data.
+     * @param[in]   aString         A pointer to a string buffer.
+     * @param[in]   aStringLength   Length of the string buffer.
+     *
+     * @retval OT_ERROR_NONE    Successfully printed CSR attributes to string.
+     * @retval OT_ERROR_PARSE   ASN.1 parsing error.
+     * @retval OT_ERROR_NO_BUFS Buffer too small.
+     */
+    otError CsrAttributesToString(uint8_t *      aData,
+                                  const uint8_t *aDataEnd,
+                                  char *         aString,
+                                  uint32_t       aStringLength);
+
+    /**
      * This method terminates the secure connection to the EST server.
      *
      */

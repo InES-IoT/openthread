@@ -89,6 +89,18 @@ otError otEstClientConnect(otInstance *              aInstance,
                                                aResponseHandler, aContext);
 }
 
+otError otEstClientCsrAttributesToString(otInstance *   aInstance,
+                                         uint8_t *      aData,
+                                         const uint8_t *aDataEnd,
+                                         char *         aString,
+                                         uint32_t       aStringLength)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.Get<Est::Client>().CsrAttributesToString(aData, aDataEnd,
+                                                             aString, aStringLength);
+}
+
 void otEstClientDisconnect(otInstance *aInstance)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);

@@ -28,6 +28,8 @@
 
 #include "est_client.hpp"
 
+#include <string.h>
+
 #include <mbedtls/oid.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/x509_crt.h>
@@ -129,6 +131,359 @@ otError Client::Connect(const Ip6::SockAddr &     aSockAddr,
     mCoapSecure.Connect(aSockAddr, &Client::CoapSecureConnectedHandle, this);
 
     return OT_ERROR_NONE;
+}
+
+otError Client::CsrAttributesToString(uint8_t *      aData,
+                                      const uint8_t *aDataEnd,
+                                      char *         aString,
+                                      uint32_t       aStringLength)
+{
+    otError  mError                   = OT_ERROR_NONE;
+    uint8_t *mSetBegin                = NULL;
+    size_t   mAttributeOidLength      = 0;
+    size_t   mAttributeSetLength      = 0;
+    size_t   mAttributeSequenceLength = 0;
+
+    VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+                 mError = OT_ERROR_PARSE);
+
+    while(aData < aDataEnd)
+    {
+        switch(*aData)
+        {
+        case MBEDTLS_ASN1_OID:
+            VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
+                         mError = OT_ERROR_PARSE);
+
+            if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_MD5, sizeof(MBEDTLS_OID_DIGEST_ALG_MD5) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: MD5\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: MD5\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA256, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA256) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA256\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: SHA256\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA384, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA384) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA384\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: SHA384\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA512, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA512) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA512\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: SHA512\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA256, sizeof(MBEDTLS_OID_ECDSA_SHA256) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA256\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: ECDSA with SHA256\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA384, sizeof(MBEDTLS_OID_ECDSA_SHA384) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA384\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: ECDSA with SHA384\r\n");
+            }
+            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA512, sizeof(MBEDTLS_OID_ECDSA_SHA512) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA512\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "MESSAGE DIGEST: ECDSA with SHA512\r\n");
+            }
+            else
+            {
+                VerifyOrExit(strlen(aString) + strlen("unknown attribute\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "unknown attribute\r\n");
+            }
+            aData += mAttributeOidLength;
+            break;
+
+        case MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE:
+            VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+                         mError = OT_ERROR_PARSE);
+            VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
+                         mError = OT_ERROR_PARSE);
+
+            if(memcmp(aData, MBEDTLS_OID_EC_ALG_UNRESTRICTED, sizeof(MBEDTLS_OID_EC_ALG_UNRESTRICTED) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("KEY TYPE: EC\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "KEY TYPE: EC\r\n");
+
+                aData += mAttributeOidLength;
+                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+                             mError = OT_ERROR_PARSE);
+
+                mSetBegin = aData;
+                while(aData < (mSetBegin + mAttributeSetLength))
+                {
+                    VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
+                                 mError = OT_ERROR_PARSE);
+
+                    if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192R1, sizeof(MBEDTLS_OID_EC_GRP_SECP192R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP192R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP192R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224R1, sizeof(MBEDTLS_OID_EC_GRP_SECP224R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP224R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP224R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256R1, sizeof(MBEDTLS_OID_EC_GRP_SECP256R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP256R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP256R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP384R1, sizeof(MBEDTLS_OID_EC_GRP_SECP384R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP384R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP384R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP521R1, sizeof(MBEDTLS_OID_EC_GRP_SECP521R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP521R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP521R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192K1, sizeof(MBEDTLS_OID_EC_GRP_SECP192K1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP192K1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP192K1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224K1, sizeof(MBEDTLS_OID_EC_GRP_SECP224K1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP224K1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP224K1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256K1, sizeof(MBEDTLS_OID_EC_GRP_SECP256K1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP256K1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: SECP256K1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP256R1, sizeof(MBEDTLS_OID_EC_GRP_BP256R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP256R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: BP256R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP384R1, sizeof(MBEDTLS_OID_EC_GRP_BP384R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP384R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: BP384R1\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP512R1, sizeof(MBEDTLS_OID_EC_GRP_BP512R1) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP512R1\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EC GROUP: BP512R1\r\n");
+                    }
+                    else
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    unknown attribute\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    unknown attribute\r\n");
+                    }
+                    aData += mAttributeOidLength;
+                }
+            }
+            else if(memcmp(aData, MBEDTLS_OID_PKCS9_CSR_EXT_REQ, sizeof(MBEDTLS_OID_PKCS9_CSR_EXT_REQ) - 1) == 0)
+            {
+                VerifyOrExit(strlen(aString) + strlen("CSR EXTENSION REQUEST\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "CSR EXTENSION REQUEST\r\n");
+
+                aData += mAttributeOidLength;
+                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+                             mError = OT_ERROR_PARSE);
+
+                mSetBegin = aData;
+                while(aData < (mSetBegin + mAttributeSetLength))
+                {
+                    VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
+                                 mError = OT_ERROR_PARSE);
+
+                    if(memcmp(aData, MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER, sizeof(MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    AUTHORITY KEY IDENTIFIER\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    AUTHORITY KEY IDENTIFIER\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER, sizeof(MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    SUBJECT KEY IDENTIFIER\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    SUBJECT KEY IDENTIFIER\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_KEY_USAGE, sizeof(MBEDTLS_OID_KEY_USAGE) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    KEY USAGE\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    KEY USAGE\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_CERTIFICATE_POLICIES, sizeof(MBEDTLS_OID_CERTIFICATE_POLICIES) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    CERTIFICATE POLICIES\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    CERTIFICATE POLICIES\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_POLICY_MAPPINGS, sizeof(MBEDTLS_OID_POLICY_MAPPINGS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    POLICY MAPPINGS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    POLICY MAPPINGS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_ALT_NAME, sizeof(MBEDTLS_OID_SUBJECT_ALT_NAME) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    SUBJECT ALT NAME\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    SUBJECT ALT NAME\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_ISSUER_ALT_NAME, sizeof(MBEDTLS_OID_ISSUER_ALT_NAME) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    ISSUER ALT NAME\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    ISSUER ALT NAME\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS, sizeof(MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    SUBJECT DIRECTORY ATTRS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    SUBJECT DIRECTORY ATTRS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_BASIC_CONSTRAINTS, sizeof(MBEDTLS_OID_BASIC_CONSTRAINTS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    BASIC CONSTRAINTS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    BASIC CONSTRAINTS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_NAME_CONSTRAINTS, sizeof(MBEDTLS_OID_NAME_CONSTRAINTS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    NAME CONSTRAINTS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    NAME CONSTRAINTS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_POLICY_CONSTRAINTS, sizeof(MBEDTLS_OID_POLICY_CONSTRAINTS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    POLICY CONSTRAINTS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    POLICY CONSTRAINTS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_EXTENDED_KEY_USAGE, sizeof(MBEDTLS_OID_EXTENDED_KEY_USAGE) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    EXTENDED KEY USAGE\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    EXTENDED KEY USAGE\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_CRL_DISTRIBUTION_POINTS, sizeof(MBEDTLS_OID_CRL_DISTRIBUTION_POINTS) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    CRL DISTRIBUTION POINTS\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    CRL DISTRIBUTION POINTS\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_INIHIBIT_ANYPOLICY, sizeof(MBEDTLS_OID_INIHIBIT_ANYPOLICY) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    INIHIBIT ANYPOLICY\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    INIHIBIT ANYPOLICY\r\n");
+                    }
+                    else if(memcmp(aData, MBEDTLS_OID_FRESHEST_CRL, sizeof(MBEDTLS_OID_FRESHEST_CRL) - 1) == 0)
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    FRESHEST CRL\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    FRESHEST CRL\r\n");
+                    }
+                    else
+                    {
+                        VerifyOrExit(strlen(aString) + strlen("    unknown attribute\r\n") < aStringLength,
+                                     mError = OT_ERROR_NO_BUFS);
+
+                        strcat(aString, "    unknown attribute\r\n");
+                    }
+                    aData += mAttributeOidLength;
+                }
+            }
+            else
+            {
+                VerifyOrExit(strlen(aString) + strlen("unknown attribute\r\n") < aStringLength,
+                             mError = OT_ERROR_NO_BUFS);
+
+                strcat(aString, "unknown attribute\r\n");
+
+                aData += mAttributeSequenceLength;
+            }
+            break;
+
+        default:
+            VerifyOrExit(strlen(aString) + strlen("unknown attribute\r\n") < aStringLength,
+                         mError = OT_ERROR_NO_BUFS);
+
+            strcat(aString, "unknown attribute\r\n");
+
+            aData++;
+            VerifyOrExit(otAsn1GetLength(&aData, aDataEnd, &mAttributeSequenceLength) == 0,
+                         mError = OT_ERROR_PARSE);
+            aData += mAttributeSequenceLength;
+            break;
+        }
+    }
+
+exit:
+
+return mError;
 }
 
 void Client::Disconnect(void)

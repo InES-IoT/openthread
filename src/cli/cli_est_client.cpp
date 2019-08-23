@@ -36,7 +36,6 @@
 #if OPENTHREAD_ENABLE_EST_CLIENT
 
 #include <mbedtls/debug.h>
-#include <mbedtls/oid.h>
 #include <openthread/coap_secure.h>
 #include <openthread/ip6.h>
 
@@ -44,6 +43,8 @@
 #include "cli/cli.hpp"
 #include "cli/cli_server.hpp"
 #include "core/common/asn1.hpp"
+
+#define CLI_EST_CLIENT_PRINTOUT_BUFFER_LENGTH   256
 
 namespace ot {
 namespace Cli {
@@ -95,13 +96,13 @@ otError EstClient::ProcessHelp(int argc, char *argv[])
 otError EstClient::ProcessStart(int argc, char *argv[])
 {
     otError error;
-    bool    mVerifyPeerCert = false;
+    bool    verifyPeerCert = false;
 
     if (argc > 1)
     {
         if (strcmp(argv[1], "true") == 0)
         {
-            mVerifyPeerCert = true;
+            verifyPeerCert = true;
         }
         else if (strcmp(argv[1], "false") != 0)
         {
@@ -109,7 +110,7 @@ otError EstClient::ProcessStart(int argc, char *argv[])
         }
     }
 
-    SuccessOrExit(error = otEstClientStart(mInterpreter.mInstance, mVerifyPeerCert));
+    SuccessOrExit(error = otEstClientStart(mInterpreter.mInstance, verifyPeerCert));
 
 exit:
     return error;
@@ -148,20 +149,20 @@ otError EstClient::ProcessStop(int argc, char *argv[])
 
 otError EstClient::ProcessConnect(int argc, char *argv[])
 {
-    otError    mError;
-    otSockAddr mServerAddress;
+    otError    error;
+    otSockAddr serverAddress;
 
-    memset(&mServerAddress, 0, sizeof(mServerAddress));
+    memset(&serverAddress, 0, sizeof(serverAddress));
 
     // Destination IPv6 address
     if (argc > 1)
     {
-        SuccessOrExit(mError = otIp6AddressFromString(argv[1], &mServerAddress.mAddress));
+        SuccessOrExit(error = otIp6AddressFromString(argv[1], &serverAddress.mAddress));
     }
     else
     {
-        SuccessOrExit(mError = otIp6AddressFromString((const char *)OT_EST_COAPS_DEFAULT_EST_SERVER_IP6,
-                                                      &mServerAddress.mAddress));
+        SuccessOrExit(error = otIp6AddressFromString((const char *)OT_EST_COAPS_DEFAULT_EST_SERVER_IP6,
+                                                      &serverAddress.mAddress));
     }
 
     // check for port specification
@@ -169,36 +170,36 @@ otError EstClient::ProcessConnect(int argc, char *argv[])
     {
         long value;
 
-        SuccessOrExit(mError = Interpreter::ParseLong(argv[2], value));
-        mServerAddress.mPort = static_cast<uint16_t>(value);
+        SuccessOrExit(error = Interpreter::ParseLong(argv[2], value));
+        serverAddress.mPort = static_cast<uint16_t>(value);
     }
     else
     {
-        mServerAddress.mPort = OT_EST_COAPS_DEFAULT_EST_SERVER_PORT;
+        serverAddress.mPort = OT_EST_COAPS_DEFAULT_EST_SERVER_PORT;
     }
 
-    SuccessOrExit(mError = otEstClientSetCaCertificateChain(mInterpreter.mInstance,
+    SuccessOrExit(error = otEstClientSetCaCertificateChain(mInterpreter.mInstance,
                                                             (const uint8_t *)OT_CLI_EST_CLIENT_TRUSTED_ROOT_CERTIFICATE,
                                                             sizeof(OT_CLI_EST_CLIENT_TRUSTED_ROOT_CERTIFICATE)));
 
     if (mOpCertificateLength == 0)
     {
-        SuccessOrExit(mError = otEstClientSetCertificate(
+        SuccessOrExit(error = otEstClientSetCertificate(
                           mInterpreter.mInstance, (const uint8_t *)OT_CLI_EST_CLIENT_X509_CERT,
                           sizeof(OT_CLI_EST_CLIENT_X509_CERT), (const uint8_t *)OT_CLI_EST_CLIENT_PRIV_KEY,
                           sizeof(OT_CLI_EST_CLIENT_PRIV_KEY)));
     }
     else
     {
-        SuccessOrExit(mError = otEstClientSetCertificate(mInterpreter.mInstance, mOpCertificate, mOpCertificateLength,
+        SuccessOrExit(error = otEstClientSetCertificate(mInterpreter.mInstance, mOpCertificate, mOpCertificateLength,
                                                          mPrivateKey, mPrivateKeyLength));
     }
 
-    SuccessOrExit(mError = otEstClientConnect(mInterpreter.mInstance, &mServerAddress, &EstClient::HandleConnected,
+    SuccessOrExit(error = otEstClientConnect(mInterpreter.mInstance, &serverAddress, &EstClient::HandleConnected,
                                               &EstClient::HandleResponse, this));
 
 exit:
-    return mError;
+    return error;
 }
 
 otError EstClient::ProcessDisconnect(int argc, char *argv[])
@@ -213,75 +214,75 @@ otError EstClient::ProcessDisconnect(int argc, char *argv[])
 
 otError EstClient::ProcessGetCaCertificate(int argc, char *argv[])
 {
-    otError mError;
+    otError error;
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    mError = otEstClientGetCaCertificates(mInterpreter.mInstance);
-    VerifyOrExit(mError == OT_ERROR_NONE);
+    error = otEstClientGetCaCertificates(mInterpreter.mInstance);
+    VerifyOrExit(error == OT_ERROR_NONE);
 
 exit:
 
-    return mError;
+    return error;
 }
 otError EstClient::ProcessGetCsrAttributes(int argc, char *argv[])
 {
-    otError mError;
+    otError error;
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    mError = otEstClientGetCsrAttributes(mInterpreter.mInstance);
-    VerifyOrExit(mError == OT_ERROR_NONE);
+    error = otEstClientGetCsrAttributes(mInterpreter.mInstance);
+    VerifyOrExit(error == OT_ERROR_NONE);
 
 exit:
 
-    return mError;
+    return error;
 }
 
 otError EstClient::ProcessSimpleEnroll(int argc, char *argv[])
 {
-    otError mError;
-    uint8_t mKeyUsageFlags = (OT_EST_KEY_USAGE_KEY_CERT_SIGN | OT_EST_KEY_USAGE_DATA_ENCIPHERMENT);
+    otError error;
+    uint8_t keyUsageFlags = (OT_EST_KEY_USAGE_KEY_CERT_SIGN | OT_EST_KEY_USAGE_DATA_ENCIPHERMENT);
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
     EstClient::CleanUpTemporaryBuffer();
 
-    mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
-    VerifyOrExit(mError == OT_ERROR_NONE);
-    mError = otEstClientSimpleEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength, OT_MD_TYPE_SHA256,
-                                     mKeyUsageFlags, NULL, 0);
-    VerifyOrExit(mError == OT_ERROR_NONE);
+    error = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
+    VerifyOrExit(error == OT_ERROR_NONE);
+    error = otEstClientSimpleEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength, OT_MD_TYPE_SHA256,
+                                     keyUsageFlags, NULL, 0);
+    VerifyOrExit(error == OT_ERROR_NONE);
 
 exit:
 
-    return mError;
+    return error;
 }
 
 otError EstClient::ProcessSimpleReEnroll(int argc, char *argv[])
 {
-    otError mError;
-    uint8_t mKeyUsageFlags = (OT_EST_KEY_USAGE_KEY_CERT_SIGN | OT_EST_KEY_USAGE_DATA_ENCIPHERMENT);
+    otError error;
+    uint8_t keyUsageFlags = (OT_EST_KEY_USAGE_KEY_CERT_SIGN | OT_EST_KEY_USAGE_DATA_ENCIPHERMENT);
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    VerifyOrExit(mOpCertificate[0] != 0, mError = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(mOpCertificate[0] != 0, error = OT_ERROR_INVALID_STATE);
 
     EstClient::CleanUpTemporaryBuffer();
 
-    mError = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
-    VerifyOrExit(mError == OT_ERROR_NONE);
-    mError = otEstClientSimpleReEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength,
-                                       OT_MD_TYPE_SHA256, mKeyUsageFlags, NULL, 0);
-    VerifyOrExit(mError == OT_ERROR_NONE);
+    error = otCryptoEcpGenenrateKey(mPrivateKeyTemp, &mPrivateKeyTempLength, mPublicKeyTemp, &mPublicKeyTempLength);
+    VerifyOrExit(error == OT_ERROR_NONE);
+    error = otEstClientSimpleReEnroll(mInterpreter.mInstance, mPrivateKeyTemp, mPrivateKeyTempLength,
+                                       OT_MD_TYPE_SHA256, keyUsageFlags, NULL, 0);
+    VerifyOrExit(error == OT_ERROR_NONE);
 
 exit:
 
-    return mError;
+    return error;
 }
 
 otError EstClient::Process(int argc, char *argv[])
@@ -361,10 +362,7 @@ void EstClient::HandleResponse(otError aError, otEstType aType, uint8_t *aPayloa
             }
             break;
         case OT_EST_TYPE_CSR_ATTR:
-            if(PrintoutCsrAttributes(aPayload, aPayload + aPayloadLength) != OT_ERROR_NONE)
-            {
-                mInterpreter.mServer->OutputFormat("invalid format received\r\n");
-            }
+            PrintoutCsrAttributes(aPayload, aPayload + aPayloadLength);
             break;
         case OT_EST_TYPE_SERVER_SIDE_KEY:
             break;
@@ -417,14 +415,37 @@ void EstClient::CleanUpTemporaryBuffer(void)
 
 otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd)
 {
-    otError  mError                   = OT_ERROR_NONE;
+    otError error = OT_ERROR_NONE;
+    char buffer[CLI_EST_CLIENT_PRINTOUT_BUFFER_LENGTH] = {0};
+
+    error = otEstClientCsrAttributesToString(mInterpreter.mInstance,
+                                              aData,
+                                              aDataEnd,
+                                              buffer,
+                                              CLI_EST_CLIENT_PRINTOUT_BUFFER_LENGTH);
+
+    if(error == OT_ERROR_NONE)
+    {
+        mInterpreter.mServer->OutputFormat(buffer);
+    }
+    else if(error == OT_ERROR_NO_BUFS)
+    {
+        mInterpreter.mServer->OutputFormat("buffer too small\r\n");
+    }
+    else
+    {
+        mInterpreter.mServer->OutputFormat("invalid format received\r\n");
+    }
+
+    return error;
+/*    otError  error                   = OT_ERROR_NONE;
     uint8_t *mSetBegin                = NULL;
     size_t   mAttributeOidLength      = 0;
     size_t   mAttributeSetLength      = 0;
     size_t   mAttributeSequenceLength = 0;
 
     VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
-                 mError = OT_ERROR_PARSE);
+                 error = OT_ERROR_PARSE);
 
     while(aData < aDataEnd)
     {
@@ -432,7 +453,7 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
         {
         case MBEDTLS_ASN1_OID:
             VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
-                         mError = OT_ERROR_PARSE);
+                         error = OT_ERROR_PARSE);
 
             if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_MD5, sizeof(MBEDTLS_OID_DIGEST_ALG_MD5) - 1) == 0)
             {
@@ -471,9 +492,9 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
         case MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE:
             VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
-                         mError = OT_ERROR_PARSE);
+                         error = OT_ERROR_PARSE);
             VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
-                         mError = OT_ERROR_PARSE);
+                         error = OT_ERROR_PARSE);
 
             if(memcmp(aData, MBEDTLS_OID_EC_ALG_UNRESTRICTED, sizeof(MBEDTLS_OID_EC_ALG_UNRESTRICTED) - 1) == 0)
             {
@@ -481,13 +502,13 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
                 aData += mAttributeOidLength;
                 VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
-                             mError = OT_ERROR_PARSE);
+                             error = OT_ERROR_PARSE);
 
                 mSetBegin = aData;
                 while(aData < (mSetBegin + mAttributeSetLength))
                 {
                     VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
-                                 mError = OT_ERROR_PARSE);
+                                 error = OT_ERROR_PARSE);
 
                     if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192R1, sizeof(MBEDTLS_OID_EC_GRP_SECP192R1) - 1) == 0)
                     {
@@ -546,13 +567,13 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
                 aData += mAttributeOidLength;
                 VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
-                             mError = OT_ERROR_PARSE);
+                             error = OT_ERROR_PARSE);
 
                 mSetBegin = aData;
                 while(aData < (mSetBegin + mAttributeSetLength))
                 {
                     VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &mAttributeOidLength, MBEDTLS_ASN1_OID) == 0,
-                                 mError = OT_ERROR_PARSE);
+                                 error = OT_ERROR_PARSE);
 
                     if(memcmp(aData, MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER, sizeof(MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER) - 1) == 0)
                     {
@@ -634,7 +655,7 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
             aData++;
             VerifyOrExit(otAsn1GetLength(&aData, aDataEnd, &mAttributeSequenceLength) == 0,
-                         mError = OT_ERROR_PARSE);
+                         error = OT_ERROR_PARSE);
             aData += mAttributeSequenceLength;
             break;
         }
@@ -642,7 +663,7 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
 exit:
 
-    return mError;
+    return error;*/
 }
 
 } // namespace Cli
