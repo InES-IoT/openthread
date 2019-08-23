@@ -138,10 +138,7 @@ public:
      * @retval OT_ERROR_PARSE   ASN.1 parsing error.
      * @retval OT_ERROR_NO_BUFS Buffer too small.
      */
-    otError CsrAttributesToString(uint8_t *      aData,
-                                  const uint8_t *aDataEnd,
-                                  char *         aString,
-                                  uint32_t       aStringLength);
+    otError CsrAttributesToString(uint8_t *aData, const uint8_t *aDataEnd, char *aString, uint32_t aStringLength);
 
     /**
      * This method terminates the secure connection to the EST server.
@@ -237,39 +234,30 @@ private:
 
     static void CoapSecureConnectedHandle(bool aConnected, void *aContext);
     void        CoapSecureConnectedHandle(bool aConnected);
-    otError     CmsReadSignedData(uint8_t * aMessage,
-                                  uint32_t  aMessageLength,
-                                  uint8_t **aPayload,
-                                  uint32_t *aPayloadLength);
-    otError     WriteCsr(const uint8_t *aPrivateKey,
-                         size_t         aPrivateLeyLength,
-                         otMdType       aMdType,
-                         uint8_t        aKeyUsageFlags,
-                         uint8_t *      aX509Extensions,
-                         uint32_t       aX509ExtensionsLength,
-                         uint8_t *      aOutput,
-                         size_t *       aOutputLength);
+    otError CmsReadSignedData(uint8_t *aMessage, uint32_t aMessageLength, uint8_t **aPayload, uint32_t *aPayloadLength);
+    otError WriteCsr(const uint8_t *aPrivateKey,
+                     size_t         aPrivateLeyLength,
+                     otMdType       aMdType,
+                     uint8_t        aKeyUsageFlags,
+                     uint8_t *      aX509Extensions,
+                     uint32_t       aX509ExtensionsLength,
+                     uint8_t *      aOutput,
+                     size_t *       aOutputLength);
     static void SimpleEnrollResponseHandler(void *               aContext,
                                             otMessage *          aMessage,
                                             const otMessageInfo *aMessageInfo,
                                             otError              aResult);
-    void        SimpleEnrollResponseHandler(otMessage *          aMessage,
-                                            const otMessageInfo *aMessageInfo,
-                                            otError              aResult);
+    void        SimpleEnrollResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult);
     static void GetCaCertificatesResponseHandler(void *               aContext,
                                                  otMessage *          aMessage,
                                                  const otMessageInfo *aMessageInfo,
                                                  otError              aResult);
-    void        GetCaCertificatesResponseHandler(otMessage *          aMessage,
-                                                 const otMessageInfo *aMessageInfo,
-                                                 otError              aResult);
+    void GetCaCertificatesResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult);
     static void GetCsrAttributesResponseHandler(void *               aContext,
                                                 otMessage *          aMessage,
                                                 const otMessageInfo *aMessageInfo,
                                                 otError              aResult);
-    void        GetCsrAttributesResponseHandler(otMessage *          aMessage,
-                                                const otMessageInfo *aMessageInfo,
-                                                otError              aResult);
+    void GetCsrAttributesResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult);
 
     bool                      mIsConnected;
     bool                      mStarted;

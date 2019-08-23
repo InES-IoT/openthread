@@ -97,8 +97,7 @@ otError otEstClientCsrAttributesToString(otInstance *   aInstance,
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
-    return instance.Get<Est::Client>().CsrAttributesToString(aData, aDataEnd,
-                                                             aString, aStringLength);
+    return instance.Get<Est::Client>().CsrAttributesToString(aData, aDataEnd, aString, aStringLength);
 }
 
 void otEstClientDisconnect(otInstance *aInstance)
@@ -125,8 +124,7 @@ otError otEstClientSimpleEnroll(otInstance *   aInstance,
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
-    return instance.Get<Est::Client>().SimpleEnroll(aPrivateKey, aPrivateLeyLength,
-                                                    aMdType, aKeyUsageFlags,
+    return instance.Get<Est::Client>().SimpleEnroll(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags,
                                                     aX509Extensions, aX509ExtensionsLength);
 }
 
@@ -140,8 +138,7 @@ otError otEstClientSimpleReEnroll(otInstance *   aInstance,
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
-    return instance.Get<Est::Client>().SimpleReEnroll(aPrivateKey, aPrivateLeyLength,
-                                                      aMdType, aKeyUsageFlags,
+    return instance.Get<Est::Client>().SimpleReEnroll(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags,
                                                       aX509Extensions, aX509ExtensionsLength);
 }
 

@@ -59,7 +59,7 @@ namespace ot {
 namespace Est {
 
 #define EST_CERTIFICATE_BUFFER_SIZE 1024
-#define EST_ATTRIBUTES_BUFFER_SIZE  256
+#define EST_ATTRIBUTES_BUFFER_SIZE 256
 
 #define EST_ASN1_OID_PKCS7_DATA \
     MBEDTLS_OID_PKCS "\x07"     \
@@ -133,10 +133,7 @@ otError Client::Connect(const Ip6::SockAddr &     aSockAddr,
     return OT_ERROR_NONE;
 }
 
-otError Client::CsrAttributesToString(uint8_t *      aData,
-                                      const uint8_t *aDataEnd,
-                                      char *         aString,
-                                      uint32_t       aStringLength)
+otError Client::CsrAttributesToString(uint8_t *aData, const uint8_t *aDataEnd, char *aString, uint32_t aStringLength)
 {
     otError  error                   = OT_ERROR_NONE;
     uint8_t *setBegin                = NULL;
@@ -144,60 +141,61 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
     size_t   attributeSetLength      = 0;
     size_t   attributeSequenceLength = 0;
 
-    VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
-                 error = OT_ERROR_PARSE);
+    VerifyOrExit(
+        otAsn1GetTag(&aData, aDataEnd, &attributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+        error = OT_ERROR_PARSE);
 
-    while(aData < aDataEnd)
+    while (aData < aDataEnd)
     {
-        switch(*aData)
+        switch (*aData)
         {
         case MBEDTLS_ASN1_OID:
             VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeOidLength, MBEDTLS_ASN1_OID) == 0,
                          error = OT_ERROR_PARSE);
 
-            if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_MD5, sizeof(MBEDTLS_OID_DIGEST_ALG_MD5) - 1) == 0)
+            if (memcmp(aData, MBEDTLS_OID_DIGEST_ALG_MD5, sizeof(MBEDTLS_OID_DIGEST_ALG_MD5) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: MD5\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: MD5\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA256, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA256) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA256, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA256) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA256\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: SHA256\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA384, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA384) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA384, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA384) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA384\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: SHA384\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA512, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA512) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_DIGEST_ALG_SHA512, sizeof(MBEDTLS_OID_DIGEST_ALG_SHA512) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: SHA512\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: SHA512\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA256, sizeof(MBEDTLS_OID_ECDSA_SHA256) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_ECDSA_SHA256, sizeof(MBEDTLS_OID_ECDSA_SHA256) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA256\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: ECDSA with SHA256\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA384, sizeof(MBEDTLS_OID_ECDSA_SHA384) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_ECDSA_SHA384, sizeof(MBEDTLS_OID_ECDSA_SHA384) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA384\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "MESSAGE DIGEST: ECDSA with SHA384\r\n");
             }
-            else if(memcmp(aData, MBEDTLS_OID_ECDSA_SHA512, sizeof(MBEDTLS_OID_ECDSA_SHA512) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_ECDSA_SHA512, sizeof(MBEDTLS_OID_ECDSA_SHA512) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("MESSAGE DIGEST: ECDSA with SHA512\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
@@ -215,99 +213,100 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
             break;
 
         case MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE:
-            VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
+            VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSequenceLength,
+                                      MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
                          error = OT_ERROR_PARSE);
             VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeOidLength, MBEDTLS_ASN1_OID) == 0,
                          error = OT_ERROR_PARSE);
 
-            if(memcmp(aData, MBEDTLS_OID_EC_ALG_UNRESTRICTED, sizeof(MBEDTLS_OID_EC_ALG_UNRESTRICTED) - 1) == 0)
+            if (memcmp(aData, MBEDTLS_OID_EC_ALG_UNRESTRICTED, sizeof(MBEDTLS_OID_EC_ALG_UNRESTRICTED) - 1) == 0)
             {
-                VerifyOrExit(strlen(aString) + strlen("KEY TYPE: EC\r\n") < aStringLength,
-                             error = OT_ERROR_NO_BUFS);
+                VerifyOrExit(strlen(aString) + strlen("KEY TYPE: EC\r\n") < aStringLength, error = OT_ERROR_NO_BUFS);
 
                 strcat(aString, "KEY TYPE: EC\r\n");
 
                 aData += attributeOidLength;
-                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSetLength,
+                                          MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
                              error = OT_ERROR_PARSE);
 
                 setBegin = aData;
-                while(aData < (setBegin + attributeSetLength))
+                while (aData < (setBegin + attributeSetLength))
                 {
                     VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeOidLength, MBEDTLS_ASN1_OID) == 0,
                                  error = OT_ERROR_PARSE);
 
-                    if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192R1, sizeof(MBEDTLS_OID_EC_GRP_SECP192R1) - 1) == 0)
+                    if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192R1, sizeof(MBEDTLS_OID_EC_GRP_SECP192R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP192R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP192R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224R1, sizeof(MBEDTLS_OID_EC_GRP_SECP224R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224R1, sizeof(MBEDTLS_OID_EC_GRP_SECP224R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP224R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP224R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256R1, sizeof(MBEDTLS_OID_EC_GRP_SECP256R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256R1, sizeof(MBEDTLS_OID_EC_GRP_SECP256R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP256R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP256R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP384R1, sizeof(MBEDTLS_OID_EC_GRP_SECP384R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP384R1, sizeof(MBEDTLS_OID_EC_GRP_SECP384R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP384R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP384R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP521R1, sizeof(MBEDTLS_OID_EC_GRP_SECP521R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP521R1, sizeof(MBEDTLS_OID_EC_GRP_SECP521R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP521R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP521R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192K1, sizeof(MBEDTLS_OID_EC_GRP_SECP192K1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP192K1, sizeof(MBEDTLS_OID_EC_GRP_SECP192K1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP192K1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP192K1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224K1, sizeof(MBEDTLS_OID_EC_GRP_SECP224K1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP224K1, sizeof(MBEDTLS_OID_EC_GRP_SECP224K1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP224K1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP224K1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256K1, sizeof(MBEDTLS_OID_EC_GRP_SECP256K1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_SECP256K1, sizeof(MBEDTLS_OID_EC_GRP_SECP256K1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: SECP256K1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: SECP256K1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP256R1, sizeof(MBEDTLS_OID_EC_GRP_BP256R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_BP256R1, sizeof(MBEDTLS_OID_EC_GRP_BP256R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP256R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: BP256R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP384R1, sizeof(MBEDTLS_OID_EC_GRP_BP384R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_BP384R1, sizeof(MBEDTLS_OID_EC_GRP_BP384R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP384R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EC GROUP: BP384R1\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EC_GRP_BP512R1, sizeof(MBEDTLS_OID_EC_GRP_BP512R1) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EC_GRP_BP512R1, sizeof(MBEDTLS_OID_EC_GRP_BP512R1) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EC GROUP: BP512R1\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
@@ -324,7 +323,7 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
                     aData += attributeOidLength;
                 }
             }
-            else if(memcmp(aData, MBEDTLS_OID_PKCS9_CSR_EXT_REQ, sizeof(MBEDTLS_OID_PKCS9_CSR_EXT_REQ) - 1) == 0)
+            else if (memcmp(aData, MBEDTLS_OID_PKCS9_CSR_EXT_REQ, sizeof(MBEDTLS_OID_PKCS9_CSR_EXT_REQ) - 1) == 0)
             {
                 VerifyOrExit(strlen(aString) + strlen("CSR EXTENSION REQUEST\r\n") < aStringLength,
                              error = OT_ERROR_NO_BUFS);
@@ -332,114 +331,124 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
                 strcat(aString, "CSR EXTENSION REQUEST\r\n");
 
                 aData += attributeOidLength;
-                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSetLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+                VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeSetLength,
+                                          MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
                              error = OT_ERROR_PARSE);
 
                 setBegin = aData;
-                while(aData < (setBegin + attributeSetLength))
+                while (aData < (setBegin + attributeSetLength))
                 {
                     VerifyOrExit(otAsn1GetTag(&aData, aDataEnd, &attributeOidLength, MBEDTLS_ASN1_OID) == 0,
                                  error = OT_ERROR_PARSE);
 
-                    if(memcmp(aData, MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER, sizeof(MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER) - 1) == 0)
+                    if (memcmp(aData, MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER,
+                               sizeof(MBEDTLS_OID_AUTHORITY_KEY_IDENTIFIER) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    AUTHORITY KEY IDENTIFIER\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    AUTHORITY KEY IDENTIFIER\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER, sizeof(MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER,
+                                    sizeof(MBEDTLS_OID_SUBJECT_KEY_IDENTIFIER) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    SUBJECT KEY IDENTIFIER\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    SUBJECT KEY IDENTIFIER\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_KEY_USAGE, sizeof(MBEDTLS_OID_KEY_USAGE) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_KEY_USAGE, sizeof(MBEDTLS_OID_KEY_USAGE) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    KEY USAGE\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    KEY USAGE\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_CERTIFICATE_POLICIES, sizeof(MBEDTLS_OID_CERTIFICATE_POLICIES) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_CERTIFICATE_POLICIES,
+                                    sizeof(MBEDTLS_OID_CERTIFICATE_POLICIES) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    CERTIFICATE POLICIES\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    CERTIFICATE POLICIES\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_POLICY_MAPPINGS, sizeof(MBEDTLS_OID_POLICY_MAPPINGS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_POLICY_MAPPINGS, sizeof(MBEDTLS_OID_POLICY_MAPPINGS) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    POLICY MAPPINGS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    POLICY MAPPINGS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_ALT_NAME, sizeof(MBEDTLS_OID_SUBJECT_ALT_NAME) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_SUBJECT_ALT_NAME, sizeof(MBEDTLS_OID_SUBJECT_ALT_NAME) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    SUBJECT ALT NAME\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    SUBJECT ALT NAME\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_ISSUER_ALT_NAME, sizeof(MBEDTLS_OID_ISSUER_ALT_NAME) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_ISSUER_ALT_NAME, sizeof(MBEDTLS_OID_ISSUER_ALT_NAME) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    ISSUER ALT NAME\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    ISSUER ALT NAME\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS, sizeof(MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS,
+                                    sizeof(MBEDTLS_OID_SUBJECT_DIRECTORY_ATTRS) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    SUBJECT DIRECTORY ATTRS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    SUBJECT DIRECTORY ATTRS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_BASIC_CONSTRAINTS, sizeof(MBEDTLS_OID_BASIC_CONSTRAINTS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_BASIC_CONSTRAINTS, sizeof(MBEDTLS_OID_BASIC_CONSTRAINTS) - 1) ==
+                             0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    BASIC CONSTRAINTS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    BASIC CONSTRAINTS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_NAME_CONSTRAINTS, sizeof(MBEDTLS_OID_NAME_CONSTRAINTS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_NAME_CONSTRAINTS, sizeof(MBEDTLS_OID_NAME_CONSTRAINTS) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    NAME CONSTRAINTS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    NAME CONSTRAINTS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_POLICY_CONSTRAINTS, sizeof(MBEDTLS_OID_POLICY_CONSTRAINTS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_POLICY_CONSTRAINTS,
+                                    sizeof(MBEDTLS_OID_POLICY_CONSTRAINTS) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    POLICY CONSTRAINTS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    POLICY CONSTRAINTS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_EXTENDED_KEY_USAGE, sizeof(MBEDTLS_OID_EXTENDED_KEY_USAGE) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_EXTENDED_KEY_USAGE,
+                                    sizeof(MBEDTLS_OID_EXTENDED_KEY_USAGE) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    EXTENDED KEY USAGE\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    EXTENDED KEY USAGE\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_CRL_DISTRIBUTION_POINTS, sizeof(MBEDTLS_OID_CRL_DISTRIBUTION_POINTS) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_CRL_DISTRIBUTION_POINTS,
+                                    sizeof(MBEDTLS_OID_CRL_DISTRIBUTION_POINTS) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    CRL DISTRIBUTION POINTS\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    CRL DISTRIBUTION POINTS\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_INIHIBIT_ANYPOLICY, sizeof(MBEDTLS_OID_INIHIBIT_ANYPOLICY) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_INIHIBIT_ANYPOLICY,
+                                    sizeof(MBEDTLS_OID_INIHIBIT_ANYPOLICY) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    INIHIBIT ANYPOLICY\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
 
                         strcat(aString, "    INIHIBIT ANYPOLICY\r\n");
                     }
-                    else if(memcmp(aData, MBEDTLS_OID_FRESHEST_CRL, sizeof(MBEDTLS_OID_FRESHEST_CRL) - 1) == 0)
+                    else if (memcmp(aData, MBEDTLS_OID_FRESHEST_CRL, sizeof(MBEDTLS_OID_FRESHEST_CRL) - 1) == 0)
                     {
                         VerifyOrExit(strlen(aString) + strlen("    FRESHEST CRL\r\n") < aStringLength,
                                      error = OT_ERROR_NO_BUFS);
@@ -468,14 +477,12 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
             break;
 
         default:
-            VerifyOrExit(strlen(aString) + strlen("unknown attribute\r\n") < aStringLength,
-                         error = OT_ERROR_NO_BUFS);
+            VerifyOrExit(strlen(aString) + strlen("unknown attribute\r\n") < aStringLength, error = OT_ERROR_NO_BUFS);
 
             strcat(aString, "unknown attribute\r\n");
 
             aData++;
-            VerifyOrExit(otAsn1GetLength(&aData, aDataEnd, &attributeSequenceLength) == 0,
-                         error = OT_ERROR_PARSE);
+            VerifyOrExit(otAsn1GetLength(&aData, aDataEnd, &attributeSequenceLength) == 0, error = OT_ERROR_PARSE);
             aData += attributeSequenceLength;
             break;
         }
@@ -483,7 +490,7 @@ otError Client::CsrAttributesToString(uint8_t *      aData,
 
 exit:
 
-return error;
+    return error;
 }
 
 void Client::Disconnect(void)
@@ -511,14 +518,8 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
 
     VerifyOrExit(mIsConnected, error = OT_ERROR_INVALID_STATE);
 
-    SuccessOrExit(error = Client::WriteCsr(aPrivateKey,
-                                            aPrivateLeyLength,
-                                            aMdType,
-                                            aKeyUsageFlags,
-                                            aX509Extensions,
-                                            aX509ExtensionsLength,
-                                            buffer,
-                                            &bufferLength));
+    SuccessOrExit(error = Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags, aX509Extensions,
+                                           aX509ExtensionsLength, buffer, &bufferLength));
 
     // The CSR is written at the end of the buffer, therefore the pointer is set to the begin of the CSR
     bufferPointer = buffer + (EST_CERTIFICATE_BUFFER_SIZE - bufferLength);
@@ -526,7 +527,8 @@ otError Client::SimpleEnroll(const uint8_t *aPrivateKey,
     // Send CSR
     VerifyOrExit((coapMessage = mCoapSecure.NewMessage(NULL)) != NULL, error = OT_ERROR_NO_BUFS);
 
-    SuccessOrExit(error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_POST, OT_EST_COAPS_SHORT_URI_SIMPLE_ENROLL));
+    SuccessOrExit(
+        error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_POST, OT_EST_COAPS_SHORT_URI_SIMPLE_ENROLL));
 
     SuccessOrExit(error = coapMessage->AppendContentFormatOption(OT_COAP_OPTION_CONTENT_FORMAT_PKCS10));
 
@@ -558,14 +560,8 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
 
     VerifyOrExit(mIsConnected && mIsEnrolled, error = OT_ERROR_INVALID_STATE);
 
-    SuccessOrExit(error = Client::WriteCsr(aPrivateKey,
-                                            aPrivateLeyLength,
-                                            aMdType,
-                                            aKeyUsageFlags,
-                                            aX509Extensions,
-                                            aX509ExtensionsLength,
-                                            buffer,
-                                            &bufferLength));
+    SuccessOrExit(error = Client::WriteCsr(aPrivateKey, aPrivateLeyLength, aMdType, aKeyUsageFlags, aX509Extensions,
+                                           aX509ExtensionsLength, buffer, &bufferLength));
 
     // The CSR is written at the end of the buffer, therefore the pointer is set to the begin of the CSR
     bufferPointer = buffer + (EST_CERTIFICATE_BUFFER_SIZE - bufferLength);
@@ -573,8 +569,8 @@ otError Client::SimpleReEnroll(const uint8_t *aPrivateKey,
     // Send CSR
     VerifyOrExit((coapMessage = mCoapSecure.NewMessage(NULL)) != NULL, error = OT_ERROR_NO_BUFS);
 
-    SuccessOrExit(error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_POST,
-                                             OT_EST_COAPS_SHORT_URI_SIMPLE_REENROLL));
+    SuccessOrExit(
+        error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_POST, OT_EST_COAPS_SHORT_URI_SIMPLE_REENROLL));
 
     SuccessOrExit(error = coapMessage->AppendContentFormatOption(OT_COAP_OPTION_CONTENT_FORMAT_PKCS10));
 
@@ -600,8 +596,8 @@ otError Client::GetCsrAttributes(void)
 
     VerifyOrExit((coapMessage = mCoapSecure.NewMessage(NULL)) != NULL, error = OT_ERROR_NO_BUFS);
 
-    SuccessOrExit(error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_GET,
-                                              OT_EST_COAPS_SHORT_URI_CSR_ATTRS));
+    SuccessOrExit(error =
+                      coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_GET, OT_EST_COAPS_SHORT_URI_CSR_ATTRS));
 
     mCoapSecure.SendMessage(*coapMessage, &Client::GetCsrAttributesResponseHandler, this);
 exit:
@@ -629,8 +625,8 @@ otError Client::GetCaCertificates(void)
 
     VerifyOrExit((coapMessage = mCoapSecure.NewMessage(NULL)) != NULL, error = OT_ERROR_NO_BUFS);
 
-    SuccessOrExit(error = coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_GET,
-                                              OT_EST_COAPS_SHORT_URI_CA_CERTS));
+    SuccessOrExit(error =
+                      coapMessage->Init(OT_COAP_TYPE_CONFIRMABLE, OT_COAP_CODE_GET, OT_EST_COAPS_SHORT_URI_CA_CERTS));
 
     mCoapSecure.SendMessage(*coapMessage, &Client::GetCaCertificatesResponseHandler, this);
 
@@ -674,8 +670,7 @@ otError Client::CmsReadSignedData(uint8_t * aMessage,
     VerifyOrExit(otAsn1GetTag(&messagePointer, messageEnd, &sequenceLength, MBEDTLS_ASN1_OID) == 0,
                  error = OT_ERROR_SECURITY);
 
-    VerifyOrExit(memcmp(messagePointer, EST_ASN1_OID_PKCS7_SIGNEDATA, sequenceLength) == 0,
-                 error = OT_ERROR_SECURITY);
+    VerifyOrExit(memcmp(messagePointer, EST_ASN1_OID_PKCS7_SIGNEDATA, sequenceLength) == 0, error = OT_ERROR_SECURITY);
 
     messagePointer += sequenceLength;
 
@@ -692,9 +687,9 @@ otError Client::CmsReadSignedData(uint8_t * aMessage,
 
     messagePointer += sequenceLength;
 
-    VerifyOrExit(otAsn1GetTag(&messagePointer, messageEnd, &sequenceLength,
-                              MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
-                 error = OT_ERROR_SECURITY);
+    VerifyOrExit(
+        otAsn1GetTag(&messagePointer, messageEnd, &sequenceLength, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET) == 0,
+        error = OT_ERROR_SECURITY);
 
     VerifyOrExit(otAsn1GetTag(&messagePointer, messageEnd, &sequenceLength,
                               MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE) == 0,
@@ -727,7 +722,7 @@ otError Client::WriteCsr(const uint8_t *aPrivateKey,
                          uint8_t *      aOutput,
                          size_t *       aOutputLength)
 {
-    otError               error                 = OT_ERROR_NONE;
+    otError               error = OT_ERROR_NONE;
     mbedtls_x509write_csr csr;
     mbedtls_pk_context    pkCtx;
     uint8_t               nsCertType            = 0;
@@ -756,11 +751,11 @@ otError Client::WriteCsr(const uint8_t *aPrivateKey,
     mbedtls_x509write_csr_set_key(&csr, &pkCtx);
 
     // Set X.509 extensions
-    if(aX509Extensions != NULL)
+    if (aX509Extensions != NULL)
     {
         otAsn1GetTag(&x509ExtensionsPointer, x509ExtensionsEnd, NULL, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET);
 
-        while(x509ExtensionsPointer < x509ExtensionsEnd)
+        while (x509ExtensionsPointer < x509ExtensionsEnd)
         {
             VerifyOrExit(otAsn1GetTag(&x509ExtensionsPointer, x509ExtensionsEnd, &oidLength, MBEDTLS_ASN1_OID) == 0,
                          error = OT_ERROR_INVALID_ARGS);
@@ -774,9 +769,9 @@ otError Client::WriteCsr(const uint8_t *aPrivateKey,
 
             valueLength += x509ExtensionsPointer - valuePointer;
 
-            VerifyOrExit(mbedtls_x509write_csr_set_extension(&csr, (char*)oidPointer,
-                                                             oidLength, valuePointer, valueLength),
-                         error = OT_ERROR_INVALID_ARGS);
+            VerifyOrExit(
+                mbedtls_x509write_csr_set_extension(&csr, (char *)oidPointer, oidLength, valuePointer, valueLength),
+                error = OT_ERROR_INVALID_ARGS);
 
             x509ExtensionsPointer = valuePointer + valueLength;
         }
@@ -809,9 +804,9 @@ void Client::SimpleEnrollResponseHandler(otMessage *aMessage, const otMessageInf
     otCoapCode       coapCode                                 = otCoapMessageGetCode(aMessage);
     otEstType        type                                     = OT_EST_TYPE_NONE;
     uint8_t          message[EST_CERTIFICATE_BUFFER_SIZE + 1] = {0};
-    uint32_t         messageLength                            = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
-    uint8_t *        payload                                  = NULL;
-    uint32_t         payloadLength                            = 0;
+    uint32_t         messageLength = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
+    uint8_t *        payload       = NULL;
+    uint32_t         payloadLength = 0;
     mbedtls_x509_crt certificate;
 
     mbedtls_x509_crt_init(&certificate);
@@ -847,7 +842,7 @@ void Client::SimpleEnrollResponseHandler(otMessage *aMessage, const otMessageInf
         break;
 
     default:
-        aResult        = OT_ERROR_FAILED;
+        aResult       = OT_ERROR_FAILED;
         payloadLength = 0;
         break;
     }
@@ -863,23 +858,19 @@ void Client::GetCaCertificatesResponseHandler(void *               aContext,
                                               const otMessageInfo *aMessageInfo,
                                               otError              aResult)
 {
-    return static_cast<Client *>(aContext)->GetCaCertificatesResponseHandler(aMessage,
-                                                                             aMessageInfo,
-                                                                             aResult);
+    return static_cast<Client *>(aContext)->GetCaCertificatesResponseHandler(aMessage, aMessageInfo, aResult);
 }
 
-void Client::GetCaCertificatesResponseHandler(otMessage *          aMessage,
-                                              const otMessageInfo *aMessageInfo,
-                                              otError              aResult)
+void Client::GetCaCertificatesResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult)
 {
     OT_UNUSED_VARIABLE(aMessageInfo);
 
     otCoapCode       coapCode                                 = otCoapMessageGetCode(aMessage);
     otEstType        type                                     = OT_EST_TYPE_NONE;
     uint8_t          message[EST_CERTIFICATE_BUFFER_SIZE + 1] = {0};
-    uint32_t         messageLength                            = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
-    uint8_t *        payload                                  = NULL;
-    uint32_t         payloadLength                            = 0;
+    uint32_t         messageLength = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
+    uint8_t *        payload       = NULL;
+    uint32_t         payloadLength = 0;
     mbedtls_x509_crt certificate;
 
     mbedtls_x509_crt_init(&certificate);
@@ -904,7 +895,7 @@ void Client::GetCaCertificatesResponseHandler(otMessage *          aMessage,
         break;
 
     default:
-        aResult        = OT_ERROR_FAILED;
+        aResult       = OT_ERROR_FAILED;
         payloadLength = 0;
         break;
     }
@@ -920,21 +911,17 @@ void Client::GetCsrAttributesResponseHandler(void *               aContext,
                                              const otMessageInfo *aMessageInfo,
                                              otError              aResult)
 {
-    return static_cast<Client *>(aContext)->GetCsrAttributesResponseHandler(aMessage,
-                                                                            aMessageInfo,
-                                                                            aResult);
+    return static_cast<Client *>(aContext)->GetCsrAttributesResponseHandler(aMessage, aMessageInfo, aResult);
 }
 
-void Client::GetCsrAttributesResponseHandler(otMessage *          aMessage,
-                                             const otMessageInfo *aMessageInfo,
-                                             otError              aResult)
+void Client::GetCsrAttributesResponseHandler(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aResult)
 {
     OT_UNUSED_VARIABLE(aMessageInfo);
 
-    otCoapCode       coapCode                                = otCoapMessageGetCode(aMessage);
-    otEstType        type                                    = OT_EST_TYPE_NONE;
-    uint8_t          message[EST_ATTRIBUTES_BUFFER_SIZE + 1] = {0};
-    uint32_t         messageLength                           = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
+    otCoapCode coapCode                                = otCoapMessageGetCode(aMessage);
+    otEstType  type                                    = OT_EST_TYPE_NONE;
+    uint8_t    message[EST_ATTRIBUTES_BUFFER_SIZE + 1] = {0};
+    uint32_t   messageLength                           = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
 
     switch (coapCode)
     {
@@ -950,7 +937,7 @@ void Client::GetCsrAttributesResponseHandler(otMessage *          aMessage,
         break;
 
     default:
-        aResult        = OT_ERROR_FAILED;
+        aResult       = OT_ERROR_FAILED;
         messageLength = 0;
         break;
     }
