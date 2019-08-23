@@ -427,12 +427,9 @@ otError EstClient::PrintoutCsrAttributes(uint8_t *aData, const uint8_t *aDataEnd
 
     if (error == OT_ERROR_NONE)
     {
-        for(char i = 0;
-            i < CLI_EST_CLIENT_PRINTOUT_BUFFER_LENGTH/CLI_EST_CLIENT_PRINTOUT_STRING_LENGTH;
-            i++)
+        for (char i = 0; i < CLI_EST_CLIENT_PRINTOUT_BUFFER_LENGTH / CLI_EST_CLIENT_PRINTOUT_STRING_LENGTH; i++)
         {
-            strncpy(printBuffer,
-                    &buffer[i * CLI_EST_CLIENT_PRINTOUT_STRING_LENGTH],
+            strncpy(printBuffer, &buffer[i * CLI_EST_CLIENT_PRINTOUT_STRING_LENGTH],
                     CLI_EST_CLIENT_PRINTOUT_STRING_LENGTH);
 
             mInterpreter.mServer->OutputFormat(printBuffer);
