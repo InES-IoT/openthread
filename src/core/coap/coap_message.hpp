@@ -451,6 +451,7 @@ public:
     otCoapOptionBlockSize GetBlockWiseBlockSize(void) {return GetHelpData().mBlockWiseData.mBlockSize; }
 #endif
 
+// scnm begin
     /**
      * This function reads and reassembles the URI path string and fills it into @p aUriPath.
      *
@@ -458,6 +459,7 @@ public:
      * @retval  OT_ERROR_NO_BUFS    URI path string is too long.
      */
     otError GetUriPath(char *aUriPath);
+// scnm end
 
     /**
      * This method adds Payload Marker indicating beginning of the payload to the CoAP header.
