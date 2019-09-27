@@ -291,7 +291,10 @@ otError Coap::ProcessRequest(int argc, char *argv[])
 
     if (argc > 4)
     {
-        payloadLength = static_cast<uint16_t>(strlen(argv[4]));
+        //payloadLength = static_cast<uint16_t>(strlen(argv[4]));
+        // scnm test begin
+        payloadLength = sizeof(TEST_PAYLOAD);
+        // scnm test end
 
         if (payloadLength > 0)
         {
@@ -302,7 +305,10 @@ otError Coap::ProcessRequest(int argc, char *argv[])
     // Embed content into message if given
     if (payloadLength > 0)
     {
-        SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
+        //SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
+        // scnm test begin
+        SuccessOrExit(error = otMessageAppend(message, TEST_PAYLOAD, sizeof(TEST_PAYLOAD)));
+        // scnm test end
     }
 
     memset(&messageInfo, 0, sizeof(messageInfo));
