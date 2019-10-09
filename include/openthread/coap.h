@@ -96,7 +96,7 @@ typedef enum otCoapCode
     OT_COAP_CODE_VALID        = OT_COAP_CODE(2, 3),  ///< Valid
     OT_COAP_CODE_CHANGED      = OT_COAP_CODE(2, 4),  ///< Changed
     OT_COAP_CODE_CONTENT      = OT_COAP_CODE(2, 5),  ///< Content
-    OT_COAP_CODE_CONTINUE     = OT_COAP_CODE(2, 31), ///< RFC7959 Continue
+    OT_COAP_CODE_CONTINUE     = OT_COAP_CODE(2, 31), ///< Continue [RFC7959]
 
     OT_COAP_CODE_BAD_REQUEST         = OT_COAP_CODE(4, 0),  ///< Bad Request
     OT_COAP_CODE_UNAUTHORIZED        = OT_COAP_CODE(4, 1),  ///< Unauthorized
@@ -105,7 +105,7 @@ typedef enum otCoapCode
     OT_COAP_CODE_NOT_FOUND           = OT_COAP_CODE(4, 4),  ///< Not Found
     OT_COAP_CODE_METHOD_NOT_ALLOWED  = OT_COAP_CODE(4, 5),  ///< Method Not Allowed
     OT_COAP_CODE_NOT_ACCEPTABLE      = OT_COAP_CODE(4, 6),  ///< Not Acceptable
-    OT_COAP_CODE_REQUEST_INCOMPLETE  = OT_COAP_CODE(4, 8),  ///< RFC7959 Request Entity Incomplete
+    OT_COAP_CODE_REQUEST_INCOMPLETE  = OT_COAP_CODE(4, 8),  ///< Request Entity Incomplete [RFC7959]
     OT_COAP_CODE_PRECONDITION_FAILED = OT_COAP_CODE(4, 12), ///< Precondition Failed
     OT_COAP_CODE_REQUEST_TOO_LARGE   = OT_COAP_CODE(4, 13), ///< Request Entity Too Large
     OT_COAP_CODE_UNSUPPORTED_FORMAT  = OT_COAP_CODE(4, 15), ///< Unsupported Content-Format
@@ -136,8 +136,9 @@ typedef enum otCoapOptionType
     OT_COAP_OPTION_URI_QUERY      = 15, ///< Uri-Query
     OT_COAP_OPTION_ACCEPT         = 17, ///< Accept
     OT_COAP_OPTION_LOCATION_QUERY = 20, ///< Location-Query
-    OT_COAP_OPTION_BLOCK2         = 23, ///< Block2 (RFC7959)
-    OT_COAP_OPTION_BLOCK1         = 27, ///< Block1 (RFC7959)
+    OT_COAP_OPTION_BLOCK2         = 23, ///< Block2 [RFC7959]
+    OT_COAP_OPTION_BLOCK1         = 27, ///< Block1 [RFC7959]
+    OT_COAP_OPTION_SIZE2          = 28, ///< Size2 [RFC7959]
     OT_COAP_OPTION_PROXY_URI      = 35, ///< Proxy-Uri
     OT_COAP_OPTION_PROXY_SCHEME   = 39, ///< Proxy-Scheme
     OT_COAP_OPTION_SIZE1          = 60, ///< Size1

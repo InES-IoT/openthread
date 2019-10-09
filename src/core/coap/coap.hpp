@@ -734,7 +734,7 @@ private:
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     otError InitiateBlockWiseTransfer(Message &aMessage, Message &aMessageOut);
     otError FinishBlock1Transfer(Message &aMessage, Message &aMessageOut);
-    otError FinalizeCoapBlockWiseTransaction(Message *               aLastBlock,
+    void    FinalizeCoapBlockWiseTransaction(Message *               aLastBlock,
                                              const Ip6::MessageInfo *aMessageInfo,
                                              Message *               aRequest,
                                              const CoapMetadata *    aCoapMetadata,
@@ -748,9 +748,8 @@ private:
     otError ProcessBlock1Request(Message &aRequest, const Ip6::MessageInfo &aMessageInfo);
     otError ProcessBlock2Request(Message &aRequest, const Ip6::MessageInfo &aMessageInfo);
 #endif
-    void    ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
-    void    ProcessReceivedResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
-
+    void ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
+    void ProcessReceivedResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     otError SendNextBlock1Request(Message &               aRequest,
@@ -758,7 +757,7 @@ private:
                                   const CoapMetadata &    aCoapMetadata,
                                   uint32_t                aBlockNumber,
                                   otCoapOptionBlockSize   aBlockSize);
-    otError SendNextBlock2Request(Message                &aRequest,
+    otError SendNextBlock2Request(Message &               aRequest,
                                   const Ip6::MessageInfo &aMessageInfo,
                                   const CoapMetadata &    aCoapMetadata,
                                   uint32_t                aBlockNumber,
@@ -796,6 +795,7 @@ private:
     void *               mDefaultHandlerContext;
 
     Sender mSender;
+
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     char     mReassemblyMessage[kMaxBodyLength];
     uint16_t mReassemblyMessageLength;

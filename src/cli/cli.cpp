@@ -1114,7 +1114,7 @@ void Interpreter::HandleDnsResponse(const char *aHostname, const Ip6::Address *a
 
     mResolvingInProgress = false;
 }
-#endif
+#endif // OPENTHREAD_ENABLE_DNS_CLIENT
 
 #if OPENTHREAD_FTD
 void Interpreter::ProcessEidCache(int argc, char *argv[])

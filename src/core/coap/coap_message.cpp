@@ -51,6 +51,7 @@ void Message::Init(void)
     GetHelpData().mHeaderLength = kMinHeaderLength;
 
     SetLength(GetHelpData().mHeaderLength);
+
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     SetBlockWiseBlockNumber(0);
     SetMoreBlocksFlag(false);
@@ -220,25 +221,25 @@ otError Message::AppendBlockOption(otCoapOptionType      aBlockType,
                                    bool                  aMoreBlocks,
                                    otCoapOptionBlockSize aBlockSize)
 {
-    otError  error       = OT_ERROR_NONE;
-    uint16_t length      = 0;
-    uint32_t optionValue = 0;
+    otError  error                     = OT_ERROR_NONE;
+    uint16_t length                    = 0;
+    uint32_t optionValue               = 0;
     uint8_t  buf[kMaxOptionHeaderSize] = {0};
 
     optionValue = (aBlockNumber << 4) + (aMoreBlocks << 3) + aBlockSize;
 
-    if(aBlockNumber <= 0x0f)
+    if (aBlockNumber <= 0x0f)
     {
         length = 1;
         buf[0] = optionValue & 0x000000ff;
     }
-    else if(aBlockNumber <= 0x0fff)
+    else if (aBlockNumber <= 0x0fff)
     {
         length = 2;
         buf[0] = (optionValue & 0x0000ff00) >> 8;
         buf[1] = optionValue & 0x000000ff;
     }
-    else if(aBlockNumber <= 0x0fffff)
+    else if (aBlockNumber <= 0x0fffff)
     {
         length = 3;
         buf[0] = (optionValue & 0x00ff0000) >> 16;
@@ -273,7 +274,7 @@ otError Message::AppendUriQueryOption(const char *aUriQuery)
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 otError Message::ReadBlockOptionValues(uint16_t aOptionLength)
 {
-    otError error = OT_ERROR_NONE;
+    otError error                     = OT_ERROR_NONE;
     uint8_t buf[kMaxOptionHeaderSize] = {0};
 
     SuccessOrExit(error = GetOptionValue(buf));
@@ -281,47 +282,48 @@ otError Message::ReadBlockOptionValues(uint16_t aOptionLength)
     SetBlockWiseBlockNumber(0);
     SetMoreBlocksFlag(false);
 
-    switch(aOptionLength)
+    switch (aOptionLength)
     {
-        case 1:
-            SetBlockWiseBlockNumber((buf[0] & 0xf0) >> 4);
-            if((buf[0] & 0x08) >> 3 == 1)
-            {
-                SetMoreBlocksFlag(true);
-            }
-            SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[0] & 0x07));
-            break;
-        case 2:
-            SetBlockWiseBlockNumber((buf[0] << 4) + ((buf[1] & 0xf0) >> 4));
-            if((buf[1] & 0x08) >> 3 == 1)
-            {
-                SetMoreBlocksFlag(true);
-            }
-            SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[1] & 0x07));
-            break;
-        case 3:
-            SetBlockWiseBlockNumber((buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4));
-            if((buf[2] & 0x08) >> 3 == 1)
-            {
-                SetMoreBlocksFlag(true);
-            }
-            SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[2] & 0x07));
-            break;
-        default:
-            error = OT_ERROR_INVALID_ARGS;
-            break;
+    case 1:
+        SetBlockWiseBlockNumber((buf[0] & 0xf0) >> 4);
+        if ((buf[0] & 0x08) >> 3 == 1)
+        {
+            SetMoreBlocksFlag(true);
+        }
+        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[0] & 0x07));
+        break;
+    case 2:
+        SetBlockWiseBlockNumber((buf[0] << 4) + ((buf[1] & 0xf0) >> 4));
+        if ((buf[1] & 0x08) >> 3 == 1)
+        {
+            SetMoreBlocksFlag(true);
+        }
+        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[1] & 0x07));
+        break;
+    case 3:
+        SetBlockWiseBlockNumber((buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4));
+        if ((buf[2] & 0x08) >> 3 == 1)
+        {
+            SetMoreBlocksFlag(true);
+        }
+        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[2] & 0x07));
+        break;
+    default:
+        error = OT_ERROR_INVALID_ARGS;
+        break;
     }
 
 exit:
     return error;
 }
+#endif
 
 otError Message::ReadBlockOptionValues(uint16_t               aOptionLength,
                                        uint32_t *             aBlockNumber,
                                        bool *                 aMoreBlocks,
                                        otCoapOptionBlockSize *aBlockSize)
 {
-    otError error = OT_ERROR_NONE;
+    otError error                     = OT_ERROR_NONE;
     uint8_t buf[kMaxOptionHeaderSize] = {0};
 
     SuccessOrExit(error = GetOptionValue(buf));
@@ -329,35 +331,35 @@ otError Message::ReadBlockOptionValues(uint16_t               aOptionLength,
     *aBlockNumber = 0;
     *aMoreBlocks  = false;
 
-    switch(aOptionLength)
+    switch (aOptionLength)
     {
-        case 1:
-            *aBlockNumber = (buf[0] & 0xf0) >> 4;
-            if((buf[0] & 0x08) >> 3 == 1)
-            {
-                *aMoreBlocks = true;
-            }
-            *aBlockSize = (otCoapOptionBlockSize)(buf[0] & 0x07);
-            break;
-        case 2:
-            *aBlockNumber = (buf[0] << 4) + ((buf[1] & 0xf0) >> 4);
-            if((buf[1] & 0x08) >> 3 == 1)
-            {
-                *aMoreBlocks = true;
-            }
-            *aBlockSize = (otCoapOptionBlockSize)(buf[1] & 0x07);
-            break;
-        case 3:
-            *aBlockNumber = (buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4);
-            if((buf[2] & 0x08) >> 3 == 1)
-            {
-                *aMoreBlocks = true;
-            }
-            *aBlockSize = (otCoapOptionBlockSize)(buf[2] & 0x07);
-            break;
-        default:
-            error = OT_ERROR_INVALID_ARGS;
-            break;
+    case 1:
+        *aBlockNumber = (buf[0] & 0xf0) >> 4;
+        if ((buf[0] & 0x08) >> 3 == 1)
+        {
+            *aMoreBlocks = true;
+        }
+        *aBlockSize = (otCoapOptionBlockSize)(buf[0] & 0x07);
+        break;
+    case 2:
+        *aBlockNumber = (buf[0] << 4) + ((buf[1] & 0xf0) >> 4);
+        if ((buf[1] & 0x08) >> 3 == 1)
+        {
+            *aMoreBlocks = true;
+        }
+        *aBlockSize = (otCoapOptionBlockSize)(buf[1] & 0x07);
+        break;
+    case 3:
+        *aBlockNumber = (buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4);
+        if ((buf[2] & 0x08) >> 3 == 1)
+        {
+            *aMoreBlocks = true;
+        }
+        *aBlockSize = (otCoapOptionBlockSize)(buf[2] & 0x07);
+        break;
+    default:
+        error = OT_ERROR_INVALID_ARGS;
+        break;
     }
 
 exit:
@@ -383,7 +385,8 @@ otError Message::GetUriPath(char *aUriPath)
                 *curUriPath++ = '/';
             }
 
-            VerifyOrExit(option->mLength < Resource::kMaxReceivedUriPath - static_cast<size_t>(curUriPath + 1 - aUriPath),
+            VerifyOrExit(option->mLength <
+                             Resource::kMaxReceivedUriPath - static_cast<size_t>(curUriPath + 1 - aUriPath),
                          error = OT_ERROR_NO_BUFS);
 
             GetOptionValue(curUriPath);

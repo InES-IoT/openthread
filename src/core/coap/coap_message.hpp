@@ -442,16 +442,40 @@ public:
      */
     otError ReadBlockOptionValues(uint16_t aOptionLength);
 
+    /**
+     * This method returns the current header length of a message.
+     *
+     * @returns The length of the message header.
+     *
+     */
     uint16_t GetHeaderLength(void) const { return GetHelpData().mHeaderLength; }
 
-    uint32_t GetBlockWiseBlockNumber(void) {return GetHelpData().mBlockWiseData.mBlockNumber; }
+    /**
+     * This method returns the block number of a CoAP block-wise transfer message.
+     *
+     * @returns The block number.
+     *
+     */
+    uint32_t GetBlockWiseBlockNumber(void) { return GetHelpData().mBlockWiseData.mBlockNumber; }
 
-    bool IsMoreBlocksFlagSet(void) {return GetHelpData().mBlockWiseData.mMoreBlocks; }
+    /**
+     * This method checks if the More Blocks flag is set.
+     *
+     * @retval TRUE   More Blocks flag is set.
+     * @retval FALSE  More Blocks flag is not set.
+     *
+     */
+    bool IsMoreBlocksFlagSet(void) { return GetHelpData().mBlockWiseData.mMoreBlocks; }
 
-    otCoapOptionBlockSize GetBlockWiseBlockSize(void) {return GetHelpData().mBlockWiseData.mBlockSize; }
+    /**
+     * This method returns the block size of a CoAP block-wise transfer message.
+     *
+     * @returns The block size.
+     *
+     */
+    otCoapOptionBlockSize GetBlockWiseBlockSize(void) { return GetHelpData().mBlockWiseData.mBlockSize; }
 #endif
 
-// scnm begin
     /**
      * This function reads and reassembles the URI path string and fills it into @p aUriPath.
      *
@@ -459,7 +483,6 @@ public:
      * @retval  OT_ERROR_NO_BUFS    URI path string is too long.
      */
     otError GetUriPath(char *aUriPath);
-// scnm end
 
     /**
      * This method adds Payload Marker indicating beginning of the payload to the CoAP header.
@@ -501,16 +524,29 @@ public:
     otError SetDefaultResponseHeader(const Message &aRequest);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    void SetBlockWiseBlockNumber(uint32_t aBlockNumber)
-    {
-        GetHelpData().mBlockWiseData.mBlockNumber = aBlockNumber;
-    }
 
-    void SetMoreBlocksFlag(bool aMoreBlocks)
-    {
-        GetHelpData().mBlockWiseData.mMoreBlocks = aMoreBlocks;
-    }
+    /**
+     * This method sets the block number value in the message HelpData.
+     *
+     * @param[in]   aBlockNumber    Block number value to set.
+     *
+     */
+    void SetBlockWiseBlockNumber(uint32_t aBlockNumber) { GetHelpData().mBlockWiseData.mBlockNumber = aBlockNumber; }
 
+    /**
+     * This method sets the More Blocks falg in the message HelpData.
+     *
+     * @param[in]   aMoreBlocks    TRUE or FALSE.
+     *
+     */
+    void SetMoreBlocksFlag(bool aMoreBlocks) { GetHelpData().mBlockWiseData.mMoreBlocks = aMoreBlocks; }
+
+    /**
+     * This method sets the block size value in the message HelpData.
+     *
+     * @param[in]   aBlockSize    Block size value to set.
+     *
+     */
     void SetBlockWiseBlockSize(otCoapOptionBlockSize aBlockSize)
     {
         GetHelpData().mBlockWiseData.mBlockSize = aBlockSize;
@@ -692,7 +728,7 @@ private:
         uint16_t mHeaderOffset; ///< The byte offset for the CoAP Header
         uint16_t mHeaderLength;
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        BlockWiseData   mBlockWiseData;
+        BlockWiseData mBlockWiseData;
 #endif
     };
 

@@ -85,6 +85,24 @@ void otCoapMessageGenerateToken(otMessage *aMessage, uint8_t aTokenLength)
     static_cast<Coap::Message *>(aMessage)->SetToken(aTokenLength);
 }
 
+otError otCoapMessageAppendBlock1Option(otMessage *           aMessage,
+                                        uint32_t              aBlockNumber,
+                                        bool                  aMoreBlocks,
+                                        otCoapOptionBlockSize aBlockSize)
+{
+    return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(OT_COAP_OPTION_BLOCK1, aBlockNumber, aMoreBlocks,
+                                                                     aBlockSize);
+}
+
+otError otCoapMessageAppendBlock2Option(otMessage *           aMessage,
+                                        uint32_t              aBlockNumber,
+                                        bool                  aMoreBlocks,
+                                        otCoapOptionBlockSize aBlockSize)
+{
+    return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(OT_COAP_OPTION_BLOCK2, aBlockNumber, aMoreBlocks,
+                                                                     aBlockSize);
+}
+
 otError otCoapMessageAppendContentFormatOption(otMessage *aMessage, otCoapOptionContentFormat aContentFormat)
 {
     return static_cast<Coap::Message *>(aMessage)->AppendContentFormatOption(aContentFormat);
