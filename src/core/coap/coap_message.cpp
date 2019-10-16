@@ -226,7 +226,7 @@ otError Message::AppendBlockOption(otCoapOptionType      aBlockType,
     uint32_t optionValue               = 0;
     uint8_t  buf[kMaxOptionHeaderSize] = {0};
 
-    optionValue = (aBlockNumber << 4) + (aMoreBlocks << 3) + aBlockSize;
+    optionValue = (aBlockNumber << 4) + (uint32_t)(aMoreBlocks << 3) + aBlockSize;
 
     if (aBlockNumber <= 0x0f)
     {
@@ -249,9 +249,12 @@ otError Message::AppendBlockOption(otCoapOptionType      aBlockType,
     else
     {
         error = OT_ERROR_INVALID_ARGS;
+        ExitNow();
     }
 
     error = AppendOption(aBlockType, length, buf);
+
+exit:
 
     return error;
 }
@@ -342,7 +345,7 @@ otError Message::ReadBlockOptionValues(uint16_t               aOptionLength,
         *aBlockSize = (otCoapOptionBlockSize)(buf[0] & 0x07);
         break;
     case 2:
-        *aBlockNumber = (buf[0] << 4) + ((buf[1] & 0xf0) >> 4);
+        *aBlockNumber = ((uint32_t)buf[0] << 4) + (((uint32_t)buf[1] & 0xf0) >> 4);
         if ((buf[1] & 0x08) >> 3 == 1)
         {
             *aMoreBlocks = true;
@@ -350,7 +353,7 @@ otError Message::ReadBlockOptionValues(uint16_t               aOptionLength,
         *aBlockSize = (otCoapOptionBlockSize)(buf[1] & 0x07);
         break;
     case 3:
-        *aBlockNumber = (buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4);
+        *aBlockNumber = ((uint32_t)buf[0] << 12) + ((uint32_t)buf[1] << 4) + (((uint32_t)buf[2] & 0xf0) >> 4);
         if ((buf[2] & 0x08) >> 3 == 1)
         {
             *aMoreBlocks = true;
