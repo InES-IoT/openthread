@@ -1,0 +1,329 @@
+// Jenkinsfile integration test of source code from https://github.com/InES-IoT/openthread/tree/est_client
+//
+// Build the Target Code
+
+
+//	author:	scnm, ZHAW-InES
+//	date:	24.10.2019
+
+node
+{
+    // Allocate executor and workspace for the Pipeline
+    checkout scm
+}
+
+pipeline
+{
+    agent any
+    
+    environment
+    {
+    GIT_COMMIT_EMAIL = sh (
+            script: 'git --no-pager show -s --format=\'%ae\'',
+            returnStdout: true
+    ).trim()
+
+        MAIL_RECIPIENT = "scnm@zhaw.ch"
+
+        MAIL_SENDER = "jenkins@srv-lab-t-002.zhaw.ch"
+        MAIL_FAILED_SUBJECT = "Failed: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        MAIL_BODY = "ERROR: Building Project. Check consol output at: ${env.BUILD_URL}"
+
+        MAKE_VARS=' '
+        
+        // global vars
+        SERVER_DEV_JLINK_ID="801007266"
+        CLIENT_DEV_JLINK_ID="801007268"
+        FLAG_DIR="/media/hdd/Jenkins/share"
+        THREAD_NETWORK_CHANNEL='26'
+        THREAD_NETWORK_PANID='0xdead'
+        THREAD_NETWORK_MASTERKEY='87903475abfdea349ab4950591aecb49'
+        THREAD_TEST_BORDER_IP='2001:620:190:ffa1::9'
+        TTY_SERVERDEVICE='/dev/ttyCliServer'
+        TTY_CLIENTDEVICE='/dev/ttyCliClient'
+        CALIFORNIUM_SERVER='2001:620:190:ffa9:dead::1235'
+        TEST_BORDER_ROUTER_IP='2001:620:190:ffa1::9'
+        TEST_BORDER_ROUTER_USER='allrounder'
+    }
+    
+    options 
+    {
+        disableConcurrentBuilds()
+    }
+    
+    stages
+    {
+        // Check test enviroment
+        
+        stage('pre checks')
+        {
+            steps
+            {
+                sh 'sleep 3'
+                
+                script
+                {
+                    // check, if hardware is free to use
+                    while (!fileExists("${env.FLAG_DIR}/hw_free.flag"))
+                    {
+                        echo "${env.FLAG_DIR}/hw_free.flag not available"
+                        // wait for hardware
+                        sh 'sleep 30'
+                    }
+                }
+
+                // put hardwareflag
+                sh "rm ${env.FLAG_DIR}/hw_free.flag"
+
+                echo 'check the test environement'
+                sh './.tests/pre_install_checks.py'
+                echo 'check if test-devices are connected'
+                sh './.tests/check_usb_dev.py'
+            }
+        }
+        
+        stage('test real Thread router')
+        {
+            steps
+            {
+                echo 'connect to real Thread router'
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo systemctl status wpantund.service' | grep 'active (running)'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo systemctl status dnsmasq.service' | grep 'active (running)'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo systemctl status otbr-nat44.service' | grep 'active (exited)'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo systemctl status avahi-daemon.service' | grep 'active (running)'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo systemctl status otbr-web.service' | grep 'active (running)'"
+
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep 'associated'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep 'true'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep 'spinel'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep '26'"
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep '0xDEAD'"
+                
+                // check ip addr for thread network (prefix)
+                sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'ip address' | grep '2001:620:190:ffa7:'"
+            }
+        }
+        
+        stage('test virtual POSIX Thread router')
+        {
+            steps
+            {
+                echo 'check health of POSIX router'
+                script
+                {
+                    def status = 0
+
+                    try
+                    {
+                        sh("ls ${env.POSIX_BORDERROUTER_ERROR_FLAG}")
+                    } 
+                    catch(Exception e)
+                    {
+                        // file not found => PASS
+                        status = 1
+                    }
+
+                    if (status != 0)
+                    {
+                        echo 'POSIX router UP'
+                    }
+                    else
+                    {
+                        echo 'POSIX router DOWN'
+                        sh 'exit 1'
+                    }
+                }
+            }
+        }
+        
+        // Test code
+        
+        stage('bootstrap')
+        {
+            steps
+            {
+                echo 'bootstrap...'
+                sh "./bootstrap"
+            }
+        }
+
+//        stage('build local')
+//        {
+//            steps
+//           {
+//               echo 'build for local target...'
+//               sh "ls"
+//                sh "make"
+//            }
+//        }
+
+//        stage('distclean')
+//        {
+//            steps
+//            {
+//                echo 'distribution clean'
+//                sh 'make distclean'
+//            }
+//        }
+        
+        stage('build target')
+        {
+            steps
+            {
+                echo 'build NRF52840'
+                sh "./bootstrap && make ${env.MAKE_VARS} -f examples/Makefile-nrf52840 COAPS=1 EST_CLIENT=1 JOINER=1"
+                sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-mtd"
+                sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-ftd"
+                echo 'Binary to ihex (Minimal Thread Device)'
+                sh 'arm-none-eabi-objcopy -O ihex output/nrf52840/bin/ot-cli-mtd mtd.hex'
+                sh 'arm-none-eabi-objcopy -O ihex output/nrf52840/bin/ot-cli-ftd ftd.hex'
+            }
+        }
+        
+        stage('flash NRF52x nodes (1xMTD/1xFTD)')
+        {
+            steps
+            {
+                echo 'list connected devices'
+                sh './nrfjprog/nrfjprog -i'
+                echo 'flash NRF52x node leader'
+                sh "./nrfjprog/nrfjprog --chiperase --program ftd.hex -s ${env.SERVER_DEV_JLINK_ID} --reset"
+                echo 'flash NRF52x node joiner'
+                sh "./nrfjprog/nrfjprog --chiperase --program mtd.hex -s ${env.CLIENT_DEV_JLINK_ID} --reset"
+            }
+        }
+        
+        stage('CLI: connect to Thread network and start coap-secure client')
+        {
+            steps
+            {
+                echo 'set channel'
+                sh "python3 .tests/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'set master key'
+                sh "python3 .tests/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'set PAN ID'
+                sh "python3 .tests/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'network controller'
+                sh "python3 .tests/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'start Thread networking'
+                sh "python3 .tests/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 10"
+                
+                echo 'check, if connected...'
+                sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'start coap-secure client'
+                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_SERVERDEVICE}"
+            }
+        }
+        
+        stage('CLI: run EST client')
+        {
+            steps
+            {
+                echo 'start EST client'
+                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'connect to EST default server (internal Registrar)'
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'request CSR attributes'
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 2"
+                
+                echo 'request CA of EST server'
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'start simple enrollment'
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'start simple reenrollment'
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'stop EST client'
+                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_SERVERDEVICE}"
+            }
+        }
+
+        stage('reset devices')
+        {
+            steps
+            {
+                echo 'reset'
+                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_CLIENTDEVICE}"
+            }
+        }
+
+        stage('clean-up')
+        {
+            steps
+            {
+                echo 'clean-up all'
+                sh 'rm mtd.hex'
+                sh 'rm ftd.hex'
+                make 'clean'
+                make 'distclean'
+                sh 'rm -R output/*'
+                sh 'rm -R build/*'
+                sh 'rm -R autom4te.cache/*'
+            }
+        }
+    }
+    
+    post 
+    {
+        always
+        {
+            // give hardware free
+            sh "cat > ${env.FLAG_DIR}/hw_free.flag"
+        }
+
+        failure 
+        {
+            script
+            {
+                mail(from: env.MAIL_SENDER, 
+                    subject: env.MAIL_FAILED_SUBJECT, 
+                    body: env.MAIL_BODY, 
+                    to: env.MAIL_RECIPIENT)
+
+                if (env.MAIL_RECIPIENT != env.GIT_COMMIT_EMAIL)
+                {
+                    mail(from: env.MAIL_SENDER,
+                        subject: env.MAIL_FAILED_SUBJECT,
+                        body: env.MAIL_BODY,
+                        to: env.GIT_COMMIT_EMAIL)
+                }
+            }    
+        }
+
+        success
+        {
+            sh "echo \'Git lattest committer email: \'"
+            sh "echo ${env.GIT_COMMIT_EMAIL}"
+        }
+    }
+}
