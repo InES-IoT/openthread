@@ -185,11 +185,11 @@ pipeline
             steps
             {
                 echo 'list connected devices'
-                sh './nrfjprog/nrfjprog -i'
+                sh './.tests/nrfjprog/nrfjprog -i'
                 echo 'flash NRF52x node leader'
-                sh "./nrfjprog/nrfjprog --chiperase --program ftd.hex -s ${env.SERVER_DEV_JLINK_ID} --reset"
+                sh "./.tests/nrfjprog/nrfjprog --chiperase --program ftd.hex -s ${env.SERVER_DEV_JLINK_ID} --reset"
                 echo 'flash NRF52x node joiner'
-                sh "./nrfjprog/nrfjprog --chiperase --program mtd.hex -s ${env.CLIENT_DEV_JLINK_ID} --reset"
+                sh "./.tests/nrfjprog/nrfjprog --chiperase --program mtd.hex -s ${env.CLIENT_DEV_JLINK_ID} --reset"
             }
         }
         
@@ -221,10 +221,6 @@ pipeline
                 echo 'check, if connected...'
                 sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_CLIENTDEVICE}"
                 sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_SERVERDEVICE}"
-                
-                echo 'start coap-secure client'
-                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_SERVERDEVICE}"
             }
         }
         
@@ -235,35 +231,45 @@ pipeline
                 echo 'start EST client'
                 sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_CLIENTDEVICE}"
                 sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 2"
                 
                 echo 'connect to EST default server (internal Registrar)'
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
                 
                 echo 'request CSR attributes'
-                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE} true"
                 sh "sleep 2"
                 
                 echo 'request CA of EST server'
-                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'start simple enrollment'
-                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'start simple reenrollment'
-                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
+                
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
+                
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'stop EST client'
                 sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_CLIENTDEVICE}"
                 sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 2"
+                
             }
         }
 
@@ -272,8 +278,8 @@ pipeline
             steps
             {
                 echo 'reset'
-                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_SERVERDEVICE}"
                 sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_SERVERDEVICE}"
             }
         }
 
@@ -282,13 +288,12 @@ pipeline
             steps
             {
                 echo 'clean-up all'
-                sh 'rm mtd.hex'
-                sh 'rm ftd.hex'
-                make 'clean'
-                make 'distclean'
-                sh 'rm -R output/*'
-                sh 'rm -R build/*'
-                sh 'rm -R autom4te.cache/*'
+                sh "ls"
+                sh "rm mtd.hex"
+                sh "rm ftd.hex"
+                sh "rm -R output/*"
+                sh "rm -R build/*"
+                sh "rm -R autom4te.cache/*"
             }
         }
     }
