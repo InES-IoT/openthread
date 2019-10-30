@@ -38,10 +38,8 @@ pipeline
         THREAD_NETWORK_CHANNEL='26'
         THREAD_NETWORK_PANID='0xdead'
         THREAD_NETWORK_MASTERKEY='87903475abfdea349ab4950591aecb49'
-        THREAD_TEST_BORDER_IP='2001:620:190:ffa1::9'
         TTY_SERVERDEVICE='/dev/ttyCliServer'
         TTY_CLIENTDEVICE='/dev/ttyCliClient'
-        CALIFORNIUM_SERVER='2001:620:190:ffa9:dead::1235'
         TEST_BORDER_ROUTER_IP='2001:620:190:ffa1::9'
         TEST_BORDER_ROUTER_USER='allrounder'
     }
@@ -146,25 +144,6 @@ pipeline
                 sh "./bootstrap"
             }
         }
-
-//        stage('build local')
-//        {
-//            steps
-//           {
-//               echo 'build for local target...'
-//               sh "ls"
-//                sh "make"
-//            }
-//        }
-
-//        stage('distclean')
-//        {
-//            steps
-//            {
-//                echo 'distribution clean'
-//                sh 'make distclean'
-//            }
-//        }
         
         stage('build target')
         {
