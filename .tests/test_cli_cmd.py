@@ -32,8 +32,10 @@
 #  Coding/ Indent:  utf8/ whitespace
 #
 #  Author:		    Christian Stauffer (stfc)
+#                           Aurelio Schellenbaum (scnm)
 #
 #  Date, Version:   26.06.2018, V 0.1
+#                               30.10.2019, V1.0
 #
 #  Description:     This Module send a cmd to OpenThread CLI and checks the
 #                   Answer. Return 0 if passed, otherwise 1.
@@ -153,12 +155,10 @@ def main(argv):
             errorCnt += 1
             Error = True
             parseError = False
-            #exit(1)
 
         try:
             cmd = serialUart.read(1000)
         except Exception as e:
-            #serialUart.close()
             print("Cant read answer: " + e)
             errorCnt += 1
             parseError = False
@@ -169,28 +169,36 @@ def main(argv):
 
             if(bShowOutput):
                 print("\nCLI Output: \n" +cmd.decode('UTF8')+"\n")
-
-            # proof result
-            if argv[2] in cmd.decode('UTF8'):
+            
+            # check if proofing of result is desired
+            if argv[2] != '':
+                # proof result
+                if argv[2] in cmd.decode('UTF8'):
+                    exitCode = 0
+                    print("CLI Test Done: PASS")
+                    parseError = False
+                    Error = False
+                else:
+                    exitCode = 1
+                    # check if parse error (uart problem)
+                    if "Error 6: Parse" in cmd.decode('UTF8'):
+                        parseError = True
+                        Error = False
+                        parseErrorCnt += 1
+                        exitCode = 1
+                        print("CLI Test: Parse Error")
+                    else:
+                        Error = True
+                        parseError = False
+                        errorCnt += 1
+                        exitCode = 1
+                        print("CLI Test Done: FAIL")
+            else:
                 exitCode = 0
                 print("CLI Test Done: PASS")
                 parseError = False
                 Error = False
-            else:
-                exitCode = 1
-                # check if parse error (uart problem)
-                if "Error 6: Parse" in cmd.decode('UTF8'):
-                    parseError = True
-                    Error = False
-                    parseErrorCnt += 1
-                    exitCode = 1
-                    print("CLI Test: Parse Error")
-                else:
-                    Error = True
-                    parseError = False
-                    errorCnt += 1
-                    exitCode = 1
-                    print("CLI Test Done: FAIL")
+                
 
     # done
     serialUart.close()

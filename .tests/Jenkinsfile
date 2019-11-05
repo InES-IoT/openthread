@@ -38,10 +38,8 @@ pipeline
         THREAD_NETWORK_CHANNEL='26'
         THREAD_NETWORK_PANID='0xdead'
         THREAD_NETWORK_MASTERKEY='87903475abfdea349ab4950591aecb49'
-        THREAD_TEST_BORDER_IP='2001:620:190:ffa1::9'
         TTY_SERVERDEVICE='/dev/ttyCliServer'
         TTY_CLIENTDEVICE='/dev/ttyCliClient'
-        CALIFORNIUM_SERVER='2001:620:190:ffa9:dead::1235'
         TEST_BORDER_ROUTER_IP='2001:620:190:ffa1::9'
         TEST_BORDER_ROUTER_USER='allrounder'
     }
@@ -98,6 +96,7 @@ pipeline
                 sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep 'spinel'"
                 sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep '26'"
                 sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'sudo wpanctl status' | grep '0xDEAD'"
+                
                 // check ip addr for thread network (prefix)
                 sh "ssh ${env.TEST_BORDER_ROUTER_USER}@${env.TEST_BORDER_ROUTER_IP} 'ip address' | grep '2001:620:190:ffa7:'"
             }
@@ -145,32 +144,13 @@ pipeline
                 sh "./bootstrap"
             }
         }
-
-//        stage('build local')
-//        {
-//            steps
-//            {
-//                echo 'build for local target...'
-//                sh "ls"
-//                sh "make"
-//            }
-//        }
-
-//        stage('distclean')
-//        {
-//            steps
-//            {
-//                echo 'distribution clean'
-//                sh 'make distclean'
-//            }
-//        }
         
         stage('build target')
         {
             steps
             {
                 echo 'build NRF52840'
-                sh "./bootstrap && make ${env.MAKE_VARS} -f Makefile-nrf52840 COAPS=1 EST_CLIENT=1 JOINER=1"
+                sh "./bootstrap && make ${env.MAKE_VARS} -f examples/Makefile-nrf52840 COAPS=1 EST_CLIENT=1 JOINER=1"
                 sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-mtd"
                 sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-ftd"
                 echo 'Binary to ihex (Minimal Thread Device)'
@@ -184,11 +164,11 @@ pipeline
             steps
             {
                 echo 'list connected devices'
-                sh './nrfjprog/nrfjprog -i'
+                sh './.tests/nrfjprog/nrfjprog -i'
                 echo 'flash NRF52x node leader'
-                sh "./nrfjprog/nrfjprog --chiperase --program ftd.hex -s ${env.SERVER_DEV_JLINK_ID} --reset"
+                sh "./.tests/nrfjprog/nrfjprog --chiperase --program ftd.hex -s ${env.SERVER_DEV_JLINK_ID} --reset"
                 echo 'flash NRF52x node joiner'
-                sh "./nrfjprog/nrfjprog --chiperase --program mtd.hex -s ${env.CLIENT_DEV_JLINK_ID} --reset"
+                sh "./.tests/nrfjprog/nrfjprog --chiperase --program mtd.hex -s ${env.CLIENT_DEV_JLINK_ID} --reset"
             }
         }
         
@@ -197,33 +177,29 @@ pipeline
             steps
             {
                 echo 'set channel'
-                sh "python3 .tests/cli/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'channel ${env.THREAD_NETWORK_CHANNEL}' 'Done' ${env.TTY_SERVERDEVICE}"
                 
                 echo 'set master key'
-                sh "python3 .tests/cli/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'masterkey ${env.THREAD_NETWORK_MASTERKEY}' 'Done' ${env.TTY_SERVERDEVICE}"
                 
                 echo 'set PAN ID'
-                sh "python3 .tests/cli/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'panid ${env.THREAD_NETWORK_PANID}' 'Done' ${env.TTY_SERVERDEVICE}"
                 
                 echo 'network controller'
-                sh "python3 .tests/cli/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'ifconfig up' 'Done' ${env.TTY_SERVERDEVICE}"
                 
                 echo 'start Thread networking'
-                sh "python3 .tests/cli/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'thread start' 'Done' ${env.TTY_SERVERDEVICE}"
                 sh "sleep 10"
                 
                 echo 'check, if connected...'
-                sh "python3 .tests/cli/test_cli_cmd.py 'state' 'child' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'state' 'child' ${env.TTY_SERVERDEVICE}"
-                
-                echo 'start coap-secure client'
-                sh "python3 .tests/cli/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'state' 'child' ${env.TTY_SERVERDEVICE}"
             }
         }
         
@@ -232,37 +208,47 @@ pipeline
             steps
             {
                 echo 'start EST client'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 2"
                 
                 echo 'connect to EST default server (internal Registrar)'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
                 
                 echo 'request CSR attributes'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE} true"
                 sh "sleep 2"
                 
                 echo 'request CA of EST server'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'start simple enrollment'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'start simple reenrollment'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
+                
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
+                
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 2"
                 
                 echo 'stop EST client'
-                sh "python3 .tests/cli/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "sleep 2"
+                
             }
         }
 
@@ -271,8 +257,8 @@ pipeline
             steps
             {
                 echo 'reset'
-                sh "python3 .tests/cli/test_cli_cmd.py 'factoryreset' '' ${env.TTY_SERVERDEVICE}"
-                sh "python3 .tests/cli/test_cli_cmd.py 'factoryreset' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'factoryreset' '' ${env.TTY_SERVERDEVICE}"
             }
         }
 
@@ -281,13 +267,12 @@ pipeline
             steps
             {
                 echo 'clean-up all'
-                sh 'rm mtd.hex'
-                sh 'rm ftd.hex'
-                make 'clean'
-                make 'distclean'
-                sh 'rm -R output/*'
-                sh 'rm -R build/*'
-                sh 'rm -R autom4te.cache/*'
+                sh "ls"
+                sh "rm mtd.hex"
+                sh "rm ftd.hex"
+                sh "rm -R output/*"
+                sh "rm -R build/*"
+                sh "rm -R autom4te.cache/*"
             }
         }
     }
