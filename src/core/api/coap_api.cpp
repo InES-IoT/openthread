@@ -262,6 +262,20 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
     instance.GetApplicationCoap().SetDefaultHandler(aHandler, aContext);
 }
 
+void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSize)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    instance.GetApplicationCoap().SetMaxBlockSize(aBlockSize);
+}
+
+otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.GetApplicationCoap().GetMaxBlockSize();
+}
+
 otError otCoapSendResponseWithParameters(otInstance *              aInstance,
                                          otMessage *               aMessage,
                                          const otMessageInfo *     aMessageInfo,

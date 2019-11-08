@@ -651,6 +651,26 @@ public:
     {
         return SendHeaderResponse(OT_COAP_CODE_REQUEST_INCOMPLETE, aRequest, aMessageInfo);
     }
+
+    /**
+     * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
+     *
+     * @param[in]  aBlockSize The maximal allowed block size.
+     */
+    void SetMaxBlockSize(otCoapOptionBlockSize aBlockSize)
+    {
+        mCurrentMaxBlockSize = aBlockSize;
+    }
+
+    /**
+     * This method returns the current set maximum block size for CoAP/-s Block-Wise Transfer.
+     *
+     * @retval The current set maximum block size.
+     */
+    otCoapOptionBlockSize GetMaxBlockSize(void)
+    {
+        return mCurrentMaxBlockSize;
+    }
 #endif
 
     /**
@@ -797,13 +817,14 @@ private:
     Sender mSender;
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    char     mReassemblyMessage[kMaxBodyLength];
-    uint16_t mReassemblyMessageLength;
-    char     mDisassemblyMessage[kMaxBodyLength];
-    uint16_t mDisassemblyMessageLength;
-    Message *mLastResponse;
-    bool     mIsBlockWiseTransferActive;
-    bool     mHasLastBlockBeenReceived; // Server only
+    otCoapOptionBlockSize mCurrentMaxBlockSize;
+    char                  mReassemblyMessage[kMaxBodyLength];
+    uint16_t              mReassemblyMessageLength;
+    char                  mDisassemblyMessage[kMaxBodyLength];
+    uint16_t              mDisassemblyMessageLength;
+    Message *             mLastResponse;
+    bool                  mIsBlockWiseTransferActive;
+    bool                  mHasLastBlockBeenReceived; // Server only
 #endif
 };
 

@@ -829,6 +829,26 @@ void otCoapRemoveResource(otInstance *aInstance, otCoapResource *aResource);
  */
 void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandler, void *aContext);
 
+// scnm begin
+/**
+ * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ * @param[in]  aBlockSize The maximal allowed block size.
+ */
+void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSize);
+
+/**
+ * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ *
+ * @retval The current set maximum block size.
+ */
+otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance);
+
+// scnm end
+
 /**
  * This function sends a CoAP response from the server with custom transmission parameters.
  *
