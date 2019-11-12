@@ -136,8 +136,9 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
 
             length -= bytesToPrint;
             bytesPrinted += bytesToPrint;
+
             // scnm test begin
-            if (bytesPrinted % 128 == 0)
+            if (bytesPrinted % (4 * kMaxBufferSize) == 0)
             {
                 mInterpreter.mServer->OutputFormat("\r\n");
             }

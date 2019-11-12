@@ -53,7 +53,7 @@ pipeline
     {
         // Check test enviroment
         
-        stage('pre checks')
+        stage('Pre Checks')
         {
             steps
             {
@@ -80,7 +80,7 @@ pipeline
             }
         }
         
-        stage('test real Thread router')
+        stage('Test real Thread Router')
         {
             steps
             {
@@ -102,7 +102,7 @@ pipeline
             }
         }
         
-        stage('test virtual POSIX Thread router')
+        stage('Test virtual POSIX Thread Router')
         {
             steps
             {
@@ -136,7 +136,7 @@ pipeline
         
         // Test code
         
-        stage('bootstrap')
+        stage('Bootstrap')
         {
             steps
             {
@@ -145,12 +145,12 @@ pipeline
             }
         }
         
-        stage('build target')
+        stage('Build Target')
         {
             steps
             {
                 echo 'build NRF52840'
-                sh "./bootstrap && make ${env.MAKE_VARS} -f examples/Makefile-nrf52840 COAPS=1 EST_CLIENT=1 JOINER=1"
+                sh "./bootstrap && make ${env.MAKE_VARS} -f examples/Makefile-nrf52840 COAPS=1 COAP=1 COAP_BLOCK=1 JOINER=1"
                 sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-mtd"
                 sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-ftd"
                 echo 'Binary to ihex (Minimal Thread Device)'
@@ -159,7 +159,7 @@ pipeline
             }
         }
         
-        stage('flash NRF52x nodes (1xMTD/1xFTD)')
+        stage('Flash NRF52x Nodes (1xMTD/1xFTD)')
         {
             steps
             {
@@ -172,7 +172,7 @@ pipeline
             }
         }
         
-        stage('CLI: connect to Thread network and start coap-secure client')
+        stage('CLI: Connect to Thread Network')
         {
             steps
             {
@@ -203,56 +203,30 @@ pipeline
             }
         }
         
-        stage('CLI: run EST client')
+        stage('CLI: Run CoAP block-wise Transfer')
         {
             steps
             {
-                echo 'start EST client'
-                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est start' 'Done' ${env.TTY_SERVERDEVICE}"
-                sh "sleep 2"
+                echo 'start coap'
+                sh "python3 .tests/test_cli_cmd.py 'coap start' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap start' 'Done' ${env.TTY_SERVERDEVICE}"
                 
-                echo 'connect to EST default server (internal Registrar)'
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
+                echo 'create coap resource on server'
+                sh "python3 .tests/test_cli_cmd.py 'coap resource test-resource' 'Done' ${env.TTY_SERVERDEVICE}"
                 
-                echo 'request CSR attributes'
-                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est csrattr' 'Done' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
+                echo 'get CoAP server ip'
+                sh "python3 .tests/test_cli_cmd.py 'ipaddr' 'Done' ${env.TTY_SERVERDEVICE} true > server_ips.out"
+                sh "grep 'Done' server_ips.out"
+                sh "sed '5q;d' server_ips.out | grep 'ipaddr'"
                 
-                echo 'request CA of EST server'
-                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est cacerts' 'CA certificate request successful' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
+                echo 'Test GET to Server'
+                sh "python3 .tests/test_cli_cmd.py 'coap get '\$(sed '6q;d' server_ips.out)' test-resource' 'Done' ${env.TTY_CLIENTDEVICE}"
                 
-                echo 'start simple enrollment'
-                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est enroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
-                
-                echo 'start simple reenrollment'
-                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est disconnect' 'disconnected' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
-                
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est connect' 'connected' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
-                
-                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'est reenroll' 'enrollment successful' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 2"
-                
-                echo 'stop EST client'
-                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'est stop' 'Done' ${env.TTY_SERVERDEVICE}"
-                sh "sleep 2"
-                
+                #sh "python3 .tests/test_cli_cmd.py 'coaps connect '\$(sed '6q;d' server_ips.out) 'CoAP Secure connected!' ${env.TTY_CLIENTDEVICE} true"
             }
         }
 
-        stage('reset devices')
+        stage('Reset Devices')
         {
             steps
             {
@@ -262,7 +236,7 @@ pipeline
             }
         }
 
-        stage('clean-up')
+        stage('Clean-Up')
         {
             steps
             {
