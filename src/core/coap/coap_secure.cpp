@@ -243,13 +243,10 @@ void CoapSecure::HandleTransmit(void)
 exit:
     if (error != OT_ERROR_NONE)
     {
-        otLogNoteMeshCoP("CoapSecure Transmit: %s", otThreadErrorToString(error));
         message->Free();
     }
-    else
-    {
-        otLogDebgMeshCoP("CoapSecure Transmit: %s", otThreadErrorToString(error));
-    }
+
+    otLogNoteMeshCoP("CoapSecure Transmit: %s", otThreadErrorToString(error));
 }
 
 } // namespace Coap

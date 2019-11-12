@@ -408,6 +408,7 @@ void CoapBase::HandleRetransmissionTimer(void)
         if (nextTime > coapMetadata.mNextTimerShot)
         {
             // No expected response or acknowledgment.
+            otLogCritCoap("Message Timeout");
             FinalizeCoapTransaction(*message, coapMetadata, NULL, NULL, OT_ERROR_RESPONSE_TIMEOUT);
         }
     }

@@ -189,7 +189,6 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
 {
     otError       error   = OT_ERROR_NONE;
     otMessage *   message = NULL;
-    otMessageInfo messageInfo;
     uint16_t      payloadLength = 0;
     uint8_t       indexShifter  = 0;
 
@@ -281,10 +280,6 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
     {
         SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
     }
-
-    memset(&messageInfo, 0, sizeof(messageInfo));
-    messageInfo.mPeerAddr = coapDestinationIp;
-    messageInfo.mPeerPort = OT_DEFAULT_COAP_PORT;
 
     if ((coapType == OT_COAP_TYPE_CONFIRMABLE) || (coapCode == OT_COAP_CODE_GET))
     {
