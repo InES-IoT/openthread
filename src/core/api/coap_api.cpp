@@ -262,6 +262,7 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
     instance.GetApplicationCoap().SetDefaultHandler(aHandler, aContext);
 }
 
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSize)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
@@ -275,6 +276,7 @@ otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance)
 
     return instance.GetApplicationCoap().GetMaxBlockSize();
 }
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 otError otCoapSendResponseWithParameters(otInstance *              aInstance,
                                          otMessage *               aMessage,

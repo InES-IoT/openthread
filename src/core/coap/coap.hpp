@@ -657,20 +657,14 @@ public:
      *
      * @param[in]  aBlockSize The maximal allowed block size.
      */
-    void SetMaxBlockSize(otCoapOptionBlockSize aBlockSize)
-    {
-        mCurrentMaxBlockSize = aBlockSize;
-    }
+    void SetMaxBlockSize(otCoapOptionBlockSize aBlockSize) { mCurrentMaxBlockSize = aBlockSize; }
 
     /**
      * This method returns the current set maximum block size for CoAP/-s Block-Wise Transfer.
      *
      * @retval The current set maximum block size.
      */
-    otCoapOptionBlockSize GetMaxBlockSize(void)
-    {
-        return mCurrentMaxBlockSize;
-    }
+    otCoapOptionBlockSize GetMaxBlockSize(void) { return mCurrentMaxBlockSize; }
 #endif
 
     /**

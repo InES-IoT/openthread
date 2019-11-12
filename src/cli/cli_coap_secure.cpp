@@ -187,10 +187,10 @@ otError CoapSecure::ProcessStop(int argc, char *argv[])
 
 otError CoapSecure::ProcessRequest(int argc, char *argv[])
 {
-    otError       error   = OT_ERROR_NONE;
-    otMessage *   message = NULL;
-    uint16_t      payloadLength = 0;
-    uint8_t       indexShifter  = 0;
+    otError    error         = OT_ERROR_NONE;
+    otMessage *message       = NULL;
+    uint16_t   payloadLength = 0;
+    uint8_t    indexShifter  = 0;
 
     // Default parameters
     char         coapUri[kMaxUriLength] = "test";

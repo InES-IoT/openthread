@@ -158,6 +158,13 @@ otError CoapSecure::SendMessage(Message &aMessage, otCoapResponseHandler aHandle
 
     VerifyOrExit(IsConnected(), error = OT_ERROR_INVALID_STATE);
 
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_512)
+    {
+        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_512);
+    }
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
     error = CoapBase::SendMessage(aMessage, mDtls.GetPeerAddress(), aHandler, aContext);
 
 exit:
@@ -169,6 +176,13 @@ otError CoapSecure::SendMessage(Message &               aMessage,
                                 otCoapResponseHandler   aHandler,
                                 void *                  aContext)
 {
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_512)
+    {
+        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_512);
+    }
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
     return CoapBase::SendMessage(aMessage, aMessageInfo, aHandler, aContext);
 }
 
