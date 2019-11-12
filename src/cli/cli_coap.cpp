@@ -414,7 +414,7 @@ void Coap::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
     otError    error           = OT_ERROR_NONE;
     otMessage *responseMessage = NULL;
     otCoapCode responseCode    = OT_COAP_CODE_EMPTY;
-    char       responseContent = '0';
+    //char       responseContent = '0'; scnm test
 
     mInterpreter.mServer->OutputFormat("coap request from ");
     mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
@@ -466,7 +466,10 @@ void Coap::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
         if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_GET)
         {
             SuccessOrExit(error = otCoapMessageSetPayloadMarker(responseMessage));
-            SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
+            // scnm test begin
+            SuccessOrExit(error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
+            // scnm test end
+            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
         }
 
         SuccessOrExit(error = otCoapSendResponseWithParameters(mInterpreter.mInstance, responseMessage, aMessageInfo,

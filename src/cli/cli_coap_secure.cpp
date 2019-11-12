@@ -136,6 +136,12 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
 
             length -= bytesToPrint;
             bytesPrinted += bytesToPrint;
+            // scnm test begin
+            if (bytesPrinted % 128 == 0)
+            {
+                mInterpreter.mServer->OutputFormat("\r\n");
+            }
+            // scnm test end
         }
     }
 
@@ -325,7 +331,10 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
     // add payload
     if (payloadLength > 0)
     {
-        SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
+        // scnm test begin
+        SuccessOrExit(error = otMessageAppend(message, TEST_BLOCK_WISE_PAYLOAD, payloadLength));
+        // scnm test end
+        //SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
     }
 
     if ((coapType == OT_COAP_TYPE_CONFIRMABLE) || (coapCode == OT_COAP_CODE_GET))
@@ -492,7 +501,7 @@ void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessag
     otError    error             = OT_ERROR_NONE;
     otMessage *responseMessage   = NULL;
     otCoapCode responseCode      = OT_COAP_CODE_EMPTY;
-    char       responseContent[] = "helloWorld";
+    //char       responseContent[] = "helloWorld"; scnm test
 
     mInterpreter.mServer->OutputFormat("coaps request from ");
     mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
@@ -548,7 +557,8 @@ void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessag
 
         if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_GET)
         {
-            SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
+            SuccessOrExit(error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
+            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent))); scnm test
         }
 
         SuccessOrExit(error = otCoapSecureSendResponse(mInterpreter.mInstance, responseMessage, aMessageInfo));
