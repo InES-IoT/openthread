@@ -819,7 +819,7 @@ otError CoapBase::SendNextBlock1Request(Message &               aRequest,
     {
         if (option->mNumber >= OT_COAP_OPTION_BLOCK1 && !isOptionSet)
         {
-            if ((aBlockNumber + 1) * (1 << (4 + aBlockSize)) < mDisassemblyMessageLength)
+            if ((aBlockNumber + 2) * (1 << (4 + aBlockSize)) < mDisassemblyMessageLength)
             {
                 moreBlocks = true;
             }
@@ -841,8 +841,17 @@ otError CoapBase::SendNextBlock1Request(Message &               aRequest,
 
     message->SetMessageId(mMessageId++);
     SuccessOrExit(error = message->SetPayloadMarker());
-    SuccessOrExit(error = message->Append(mDisassemblyMessage + ((aBlockNumber + 1) * (1 << (4 + aBlockSize))),
-                                          1 << (4 + aBlockSize)));
+
+    if (moreBlocks)
+    {
+        SuccessOrExit(error = message->Append(mDisassemblyMessage + ((aBlockNumber + 1) * (1 << (4 + aBlockSize))),
+                                              1 << (4 + aBlockSize)));
+    }
+    else
+    {
+        SuccessOrExit(error = message->Append(mDisassemblyMessage + ((aBlockNumber + 1) * (1 << (4 + aBlockSize))),
+                                              mDisassemblyMessageLength - ((aBlockNumber + 1) * (1 << (4 + aBlockSize)))));
+    }
 
     DequeueMessage(aRequest);
 
