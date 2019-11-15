@@ -100,6 +100,9 @@ private:
     otError ProcessStart(int argc, char *argv[]);
     otError ProcessStop(int argc, char *argv[]);
     otError ProcessX509(int argc, char *argv[]);
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    otError ProcessBlocksize(int argc, char *argv[]);
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
     void Stop(void);
 

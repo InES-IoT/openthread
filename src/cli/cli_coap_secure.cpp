@@ -102,6 +102,9 @@ const struct CoapSecure::Command CoapSecure::sCommands[] = {
 #ifdef MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
     {"x509", &CoapSecure::ProcessX509},
 #endif
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    {"blocksize", &CoapSecure::ProcessBlocksize},
+#endif
 };
 
 CoapSecure::CoapSecure(Interpreter &aInterpreter)
@@ -319,7 +322,18 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
     if (argc > (4 - indexShifter))
     {
         // scnm test begin
-        payloadLength = sizeof(TEST_BLOCK_WISE_PAYLOAD);
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+        if (strcmp(argv[4 - indexShifter], "test-payload") == 0)
+        {
+            payloadLength = sizeof(TEST_BLOCK_WISE_PAYLOAD);
+        }
+        else
+        {
+            payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
+        }
+#else
+        payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
         // scnm test end
         //payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
 
@@ -333,7 +347,18 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
     if (payloadLength > 0)
     {
         // scnm test begin
-        SuccessOrExit(error = otMessageAppend(message, TEST_BLOCK_WISE_PAYLOAD, payloadLength));
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+        if (strcmp(argv[4 - indexShifter], "test-payload") == 0)
+        {
+            SuccessOrExit(error = otMessageAppend(message, TEST_BLOCK_WISE_PAYLOAD, payloadLength));
+        }
+        else
+        {
+            SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
+        }
+#else
+        SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
         // scnm test end
         //SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
     }
@@ -469,6 +494,57 @@ void CoapSecure::Stop(void)
     otCoapSecureStop(mInterpreter.mInstance);
 }
 
+
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+otError CoapSecure::ProcessBlocksize(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+
+    if (argc > 1)
+    {
+        if (strcmp(argv[1], "1024") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_1024);
+        }
+        else if (strcmp(argv[1], "512") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_512);
+        }
+        else if (strcmp(argv[1], "256") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_256);
+        }
+        else if (strcmp(argv[1], "128") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_128);
+        }
+        else if (strcmp(argv[1], "64") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_64);
+        }
+        else if (strcmp(argv[1], "32") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_32);
+        }
+        else if (strcmp(argv[1], "16") == 0)
+        {
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_16);
+        }
+        else
+        {
+            ExitNow(error = OT_ERROR_INVALID_ARGS);
+        }
+    }
+    else
+    {
+        mInterpreter.mServer->OutputFormat("%d\r\n", 1 << (4 + otCoapGetMaxBlockSize(mInterpreter.mInstance)));
+    }
+
+exit:
+    return error;
+}
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
 void CoapSecure::HandleConnected(bool aConnected, void *aContext)
 {
     static_cast<CoapSecure *>(aContext)->HandleConnected(aConnected);
@@ -502,7 +578,9 @@ void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessag
     otError    error             = OT_ERROR_NONE;
     otMessage *responseMessage   = NULL;
     otCoapCode responseCode      = OT_COAP_CODE_EMPTY;
-    //char       responseContent[] = "helloWorld"; scnm test
+#if !OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE   // scnm test begin
+    char       responseContent[] = "helloWorld";
+#endif  // scnm test end
 
     mInterpreter.mServer->OutputFormat("coaps request from ");
     mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
@@ -558,8 +636,14 @@ void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessag
 
         if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_GET)
         {
+            // scnm test begin
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
             SuccessOrExit(error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
-            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent))); scnm test
+#else
+            SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
+#endif
+            // scnm test end
+            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
         }
 
         SuccessOrExit(error = otCoapSecureSendResponse(mInterpreter.mInstance, responseMessage, aMessageInfo));
@@ -589,17 +673,21 @@ void CoapSecure::HandleResponse(void *aContext, otMessage *aMessage, const otMes
 
 void CoapSecure::HandleResponse(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aError)
 {
+    // scnm test begin
+    OT_UNUSED_VARIABLE(aMessage);
+    OT_UNUSED_VARIABLE(aError);
+    // scnm test end
     OT_UNUSED_VARIABLE(aMessageInfo);
 
     if (aError != OT_ERROR_NONE)
     {
-        mInterpreter.mServer->OutputFormat("coaps receive response error %d: %s\r\n", aError,
-                                           otThreadErrorToString(aError));
+        /*mInterpreter.mServer->OutputFormat("coaps receive response error %d: %s\r\n", aError,
+                                           otThreadErrorToString(aError)); scnm test*/
     }
     else
     {
-        mInterpreter.mServer->OutputFormat("coaps response from ");
-        mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
+        /*mInterpreter.mServer->OutputFormat("coaps response from ");
+        mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr); scnm test*/
 
         PrintPayload(aMessage);
     }
