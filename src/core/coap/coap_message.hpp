@@ -410,6 +410,7 @@ public:
      * @retval OT_ERROR_NONE          Successfully appended the option.
      * @retval OT_ERROR_INVALID_ARGS  The option type is not equal or greater than the last option type.
      * @retval OT_ERROR_NO_BUFS       The option length exceeds the buffer size.
+     *
      */
     otError AppendUriQueryOption(const char *aUriQuery);
 
@@ -424,6 +425,7 @@ public:
      * @retval  OT_ERROR_NONE           The option has been found and is valid.
      * @retval  OT_ERROR_NOT_FOUND      The option has not been found.
      * @retval  OT_ERROR_INVALID_ARGS   The option is invalid.
+     *
      */
     otError ReadBlockOptionValues(otCoapOptionType aBlockType,
                                   uint32_t *       aBlockNumber,
@@ -440,6 +442,7 @@ public:
      * @retval  OT_ERROR_NONE           The option has been found and is valid.
      * @retval  OT_ERROR_NOT_FOUND      The option has not been found.
      * @retval  OT_ERROR_INVALID_ARGS   The option is invalid.
+     *
      */
     otError ReadBlockOptionValues(otCoapOptionType aBlockType);
 
@@ -482,6 +485,7 @@ public:
      *
      * @retval  OT_ERROR_NONE       URI path string has been reassembled.
      * @retval  OT_ERROR_NO_BUFS    URI path string is too long.
+     *
      */
     otError GetUriPath(char *aUriPath);
 

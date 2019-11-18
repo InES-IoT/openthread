@@ -673,21 +673,15 @@ void CoapSecure::HandleResponse(void *aContext, otMessage *aMessage, const otMes
 
 void CoapSecure::HandleResponse(otMessage *aMessage, const otMessageInfo *aMessageInfo, otError aError)
 {
-    // scnm test begin
-    OT_UNUSED_VARIABLE(aMessage);
-    OT_UNUSED_VARIABLE(aError);
-    // scnm test end
-    OT_UNUSED_VARIABLE(aMessageInfo);
-
     if (aError != OT_ERROR_NONE)
     {
-        /*mInterpreter.mServer->OutputFormat("coaps receive response error %d: %s\r\n", aError,
-                                           otThreadErrorToString(aError)); scnm test*/
+        mInterpreter.mServer->OutputFormat("coaps receive response error %d: %s\r\n", aError,
+                                           otThreadErrorToString(aError));
     }
     else
     {
-        /*mInterpreter.mServer->OutputFormat("coaps response from ");
-        mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr); scnm test*/
+        mInterpreter.mServer->OutputFormat("coaps response from ");
+        mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
 
         PrintPayload(aMessage);
     }

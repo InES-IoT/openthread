@@ -33,7 +33,7 @@
 
 #include "cli_coap.hpp"
 
-#if OPENTHREAD_CONFIG_COAP_API_ENABLE
+//#if OPENTHREAD_CONFIG_COAP_API_ENABLE
 
 #include <ctype.h>
 
@@ -572,6 +572,11 @@ exit:
         {
             mInterpreter.mServer->OutputFormat("coap send response error %d: %s\r\n", error,
                                                otThreadErrorToString(error));
+
+            // scnm test begin
+            otLogCritCoap("HandleRequest: Free %x", responseMessage);
+            // scnm test end
+
             otMessageFree(responseMessage);
         }
     }
@@ -605,4 +610,4 @@ void Coap::HandleResponse(otMessage *aMessage, const otMessageInfo *aMessageInfo
 } // namespace Cli
 } // namespace ot
 
-#endif // OPENTHREAD_CONFIG_COAP_API_ENABLE
+//#endif // OPENTHREAD_CONFIG_COAP_API_ENABLE
