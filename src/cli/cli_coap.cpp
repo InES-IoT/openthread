@@ -572,11 +572,6 @@ exit:
         {
             mInterpreter.mServer->OutputFormat("coap send response error %d: %s\r\n", error,
                                                otThreadErrorToString(error));
-
-            // scnm test begin
-            otLogCritCoap("HandleRequest: Free %x", responseMessage);
-            // scnm test end
-
             otMessageFree(responseMessage);
         }
     }
