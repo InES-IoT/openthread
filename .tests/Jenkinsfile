@@ -220,7 +220,14 @@ pipeline
                 sh "sed '5q;d' server_ips.out | grep 'ipaddr'"
                 
                 echo 'Test GET to Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap get '\$(sed '6q;d' server_ips.out)' test-resource' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap get '\$(sed '6q;d' server_ips.out)' test-resource' 'coap response from '\$(sed '6q;d' server_ips.out) ${env.TTY_CLIENTDEVICE}"
+                
+                echo 'Test PUT to Server'
+                sh "python3 .tests/test_cli_cmd.py 'coap put '\$(sed '6q;d' server_ips.out)' test-resource non-con test-payload' 'coap response from '\$(sed '6q;d' server_ips.out) ${env.TTY_CLIENTDEVICE}"
+                
+                echo 'Test POST to Server'
+                sh "python3 .tests/test_cli_cmd.py 'coap put '\$(sed '6q;d' server_ips.out)' test-resource non-con test-payload' 'coap response from '\$(sed '6q;d' server_ips.out) ${env.TTY_CLIENTDEVICE}"
+                
                 
                 #sh "python3 .tests/test_cli_cmd.py 'coaps connect '\$(sed '6q;d' server_ips.out) 'CoAP Secure connected!' ${env.TTY_CLIENTDEVICE} true"
             }
