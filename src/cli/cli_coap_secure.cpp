@@ -43,59 +43,65 @@
 // header for place your x509 certificate and private key
 #include "x509_cert_key.hpp"
 
-#define TEST_BLOCK_WISE_PAYLOAD "Lorem ipsum dolor sit amet, cum ea consul iriure i"    \
-                                "ntellegat, duo omnes oratio consetetur cu. Verear "    \
-                                "ullamcorper sea in, sea rebum prompta ne. Eu sint "    \
-                                "aliquip vis. Eirmod nostrud mnesarchum pro ad, nam"    \
-                                " at doctus impedit accusamus. Ex qui soleat conven"    \
-                                "ire, nobis adversarium efficiantur at sea, te vim "    \
-                                "tale partem. Vix diam erat nostro ex, qui volumus "    \
-                                "voluptua deseruisse et. Veri accusam has no, scaev"    \
-                                "ola scriptorem ex sit. Qui hendrerit assueverit ne"    \
-                                ", ea mei wisi praesent. Eam natum melius virtute e"    \
-                                "x. Ei nam partem copiosae torquatos. Solet tation "    \
-                                "pro no. Usu in solum noluisse. Ea dico aliquando v"    \
-                                "oluptaria vix, ludus tollit est ne. Ex usu corrump"    \
-                                "it sententiae, ad vix quaeque laoreet referrentur."    \
-                                " Nihil evertitur posidonium te per, augue oratio e"    \
-                                "vertitur nec id, iriure lobortis sententiae ut eos"    \
-                                ". Eam scripta adipiscing concludaturque ei. Nec vi"    \
-                                "ris zril sanctus in, ut cibo everti tamquam cum, s"    \
-                                "it ridens ceteros ei. Id has primis nominavi expet"    \
-                                "endis, at nam consul senserit consequuntur. Nec ut"    \
-                                " suas habemus, vix in vivendum prodesset. Eu per f"    \
-                                "erri possit rationibus. Pri ea civibus lobortis pe"    \
-                                "rtinax. Regione omnesque eleifend te vis. Vim ride"    \
-                                "ns elaboraret ut, nec ea velit error legimus, fabu"    \
-                                "las facilisis elaboraret ex est. Suavitate signife"    \
-                                "rumque te usu, per fastidii adipisci no. Sed aperi"    \
-                                "am corpora principes at. Mel everti mediocrem cu, "    \
-                                "mnesarchum scriptorem usu no, quando eligendi dign"    \
-                                "issim ut ius. Cu has viris libris, pri ut ceteros "    \
-                                "nusquam invidunt, corpora rationibus philosophia p"    \
-                                "er te. Aeterno mediocrem patrioque eu est, quot ob"    \
-                                "lique laboramus per ne. Eirmod facilisis conclusio"    \
-                                "nemque mei ea, ut eos illud tempor complectitur. L"    \
-                                "obortis honestatis ne vis. Scaevola inimicus sed n"    \
-                                "o, at soleat evertitur his, quis dolores prodesset"    \
-                                " cu per. Partem dictas vel ne, vel no quod nulla s"    \
-                                "onet, ut aliquam inimicus recteque duo. Sit cu vid"    \
-                                "isse assentior. Quo an autem putent, nec in legere"    \
-                                " detracto petentium. Elit timeam no est. Wisi voce"    \
-                                "nt eleifend his ei. Ex has prima saperet epicuri, "    \
-                                "at nec fabellas intellegam. Reque laoreet propriae"    \
-                                " ne nam. Vim dicant maluisset ut, ex vim wisi grae"    \
-                                "ce, eum labore facete id."
+#define TEST_BLOCK_WISE_PAYLOAD                          \
+    "Lorem ipsum dolor sit amet, cum ea consul iriure i" \
+    "ntellegat, duo omnes oratio consetetur cu. Verear " \
+    "ullamcorper sea in, sea rebum prompta ne. Eu sint " \
+    "aliquip vis. Eirmod nostrud mnesarchum pro ad, nam" \
+    " at doctus impedit accusamus. Ex qui soleat conven" \
+    "ire, nobis adversarium efficiantur at sea, te vim " \
+    "tale partem. Vix diam erat nostro ex, qui volumus " \
+    "voluptua deseruisse et. Veri accusam has no, scaev" \
+    "ola scriptorem ex sit. Qui hendrerit assueverit ne" \
+    ", ea mei wisi praesent. Eam natum melius virtute e" \
+    "x. Ei nam partem copiosae torquatos. Solet tation " \
+    "pro no. Usu in solum noluisse. Ea dico aliquando v" \
+    "oluptaria vix, ludus tollit est ne. Ex usu corrump" \
+    "it sententiae, ad vix quaeque laoreet referrentur." \
+    " Nihil evertitur posidonium te per, augue oratio e" \
+    "vertitur nec id, iriure lobortis sententiae ut eos" \
+    ". Eam scripta adipiscing concludaturque ei. Nec vi" \
+    "ris zril sanctus in, ut cibo everti tamquam cum, s" \
+    "it ridens ceteros ei. Id has primis nominavi expet" \
+    "endis, at nam consul senserit consequuntur. Nec ut" \
+    " suas habemus, vix in vivendum prodesset. Eu per f" \
+    "erri possit rationibus. Pri ea civibus lobortis pe" \
+    "rtinax. Regione omnesque eleifend te vis. Vim ride" \
+    "ns elaboraret ut, nec ea velit error legimus, fabu" \
+    "las facilisis elaboraret ex est. Suavitate signife" \
+    "rumque te usu, per fastidii adipisci no. Sed aperi" \
+    "am corpora principes at. Mel everti mediocrem cu, " \
+    "mnesarchum scriptorem usu no, quando eligendi dign" \
+    "issim ut ius. Cu has viris libris, pri ut ceteros " \
+    "nusquam invidunt, corpora rationibus philosophia p" \
+    "er te. Aeterno mediocrem patrioque eu est, quot ob" \
+    "lique laboramus per ne. Eirmod facilisis conclusio" \
+    "nemque mei ea, ut eos illud tempor complectitur. L" \
+    "obortis honestatis ne vis. Scaevola inimicus sed n" \
+    "o, at soleat evertitur his, quis dolores prodesset" \
+    " cu per. Partem dictas vel ne, vel no quod nulla s" \
+    "onet, ut aliquam inimicus recteque duo. Sit cu vid" \
+    "isse assentior. Quo an autem putent, nec in legere" \
+    " detracto petentium. Elit timeam no est. Wisi voce" \
+    "nt eleifend his ei. Ex has prima saperet epicuri, " \
+    "at nec fabellas intellegam. Reque laoreet propriae" \
+    " ne nam. Vim dicant maluisset ut, ex vim wisi grae" \
+    "ce, eum labore facete id."
 
 namespace ot {
 namespace Cli {
 
 const struct CoapSecure::Command CoapSecure::sCommands[] = {
-    {"help", &CoapSecure::ProcessHelp},      {"connect", &CoapSecure::ProcessConnect},
-    {"delete", &CoapSecure::ProcessRequest}, {"disconnect", &CoapSecure::ProcessDisconnect},
-    {"get", &CoapSecure::ProcessRequest},    {"post", &CoapSecure::ProcessRequest},
-    {"put", &CoapSecure::ProcessRequest},    {"resource", &CoapSecure::ProcessResource},
-    {"start", &CoapSecure::ProcessStart},    {"stop", &CoapSecure::ProcessStop},
+    {"help", &CoapSecure::ProcessHelp},
+    {"connect", &CoapSecure::ProcessConnect},
+    {"delete", &CoapSecure::ProcessRequest},
+    {"disconnect", &CoapSecure::ProcessDisconnect},
+    {"get", &CoapSecure::ProcessRequest},
+    {"post", &CoapSecure::ProcessRequest},
+    {"put", &CoapSecure::ProcessRequest},
+    {"resource", &CoapSecure::ProcessResource},
+    {"start", &CoapSecure::ProcessStart},
+    {"stop", &CoapSecure::ProcessStop},
 #ifdef MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
     {"psk", &CoapSecure::ProcessPsk},
 #endif
@@ -334,8 +340,8 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
 #else
         payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        // scnm test end
-        //payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
+       // scnm test end
+       // payloadLength = static_cast<uint16_t>(strlen(argv[4 - indexShifter]));
 
         if (payloadLength > 0)
         {
@@ -359,8 +365,8 @@ otError CoapSecure::ProcessRequest(int argc, char *argv[])
 #else
         SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        // scnm test end
-        //SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
+       // scnm test end
+       // SuccessOrExit(error = otMessageAppend(message, argv[4 - indexShifter], payloadLength));
     }
 
     if ((coapType == OT_COAP_TYPE_CONFIRMABLE) || (coapCode == OT_COAP_CODE_GET))
@@ -494,7 +500,6 @@ void CoapSecure::Stop(void)
     otCoapSecureStop(mInterpreter.mInstance);
 }
 
-
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 otError CoapSecure::ProcessBlocksize(int argc, char *argv[])
 {
@@ -575,12 +580,12 @@ void CoapSecure::HandleRequest(void *aContext, otMessage *aMessage, const otMess
 
 void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
-    otError    error             = OT_ERROR_NONE;
-    otMessage *responseMessage   = NULL;
-    otCoapCode responseCode      = OT_COAP_CODE_EMPTY;
-#if !OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE   // scnm test begin
-    char       responseContent[] = "helloWorld";
-#endif  // scnm test end
+    otError    error           = OT_ERROR_NONE;
+    otMessage *responseMessage = NULL;
+    otCoapCode responseCode    = OT_COAP_CODE_EMPTY;
+#if !OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE // scnm test begin
+    char responseContent[] = "helloWorld";
+#endif // scnm test end
 
     mInterpreter.mServer->OutputFormat("coaps request from ");
     mInterpreter.OutputIp6Address(aMessageInfo->mPeerAddr);
@@ -638,12 +643,13 @@ void CoapSecure::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessag
         {
             // scnm test begin
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-            SuccessOrExit(error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
+            SuccessOrExit(
+                error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
 #else
             SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
 #endif
             // scnm test end
-            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
+            // SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
         }
 
         SuccessOrExit(error = otCoapSecureSendResponse(mInterpreter.mInstance, responseMessage, aMessageInfo));

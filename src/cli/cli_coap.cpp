@@ -113,27 +113,62 @@ void Coap::PrintPayload(otMessage *aMessage) const
     uint16_t bytesToPrint;
     uint16_t bytesPrinted = 0;
     uint16_t length       = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
+    // scnm test begin
+    bool payloadCorrect = true;
+    // scnm test end
 
     if (length > 0)
     {
         mInterpreter.mServer->OutputFormat(" with payload: ");
 
-        while (length > 0)
+        // scnm test begin
+        if ((otMessageGetLength(aMessage) - otMessageGetOffset(aMessage)) >
+            (1 << (4 + otCoapGetMaxBlockSize(mInterpreter.mInstance))))
         {
-            bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
-            otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
-
-            mInterpreter.OutputBytes(buf, static_cast<uint8_t>(bytesToPrint));
-
-            length -= bytesToPrint;
-            bytesPrinted += bytesToPrint;
-
-            // scnm test begin
-            if (bytesPrinted % (4 * kMaxBufferSize) == 0)
+            while (length > 0)
             {
-                mInterpreter.mServer->OutputFormat("\r\n");
+                bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
+                otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
+
+                if (memcmp(buf, TEST_BLOCK_WISE_PAYLOAD + bytesPrinted, bytesToPrint) != 0)
+                {
+                    payloadCorrect = false;
+                    break;
+                }
+
+                length -= bytesToPrint;
+                bytesPrinted += bytesToPrint;
             }
-            // scnm test end
+
+            if (payloadCorrect)
+            {
+                mInterpreter.mServer->OutputFormat("test-payload correct");
+            }
+            else
+            {
+                mInterpreter.mServer->OutputFormat("test-payload incorrect");
+            }
+        }
+        else
+        {
+        // scnm test end
+            while (length > 0)
+            {
+                bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
+                otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
+
+                mInterpreter.OutputBytes(buf, static_cast<uint8_t>(bytesToPrint));
+
+                length -= bytesToPrint;
+                bytesPrinted += bytesToPrint;
+
+                // scnm test begin
+                if (bytesPrinted % (4 * kMaxBufferSize) == 0)
+                {
+                    mInterpreter.mServer->OutputFormat("\r\n");
+                }
+                // scnm test end
+            }
         }
     }
 
@@ -358,8 +393,8 @@ otError Coap::ProcessRequest(int argc, char *argv[])
 #else
         payloadLength = static_cast<uint16_t>(strlen(argv[4]));
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        // scnm test end
-        //payloadLength = static_cast<uint16_t>(strlen(argv[4]));
+       // scnm test end
+       // payloadLength = static_cast<uint16_t>(strlen(argv[4]));
 
         if (payloadLength > 0)
         {
@@ -383,8 +418,8 @@ otError Coap::ProcessRequest(int argc, char *argv[])
 #else
         SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        // scnm test end
-        //SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
+       // scnm test end
+       // SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
     }
 
     memset(&messageInfo, 0, sizeof(messageInfo));
@@ -552,12 +587,13 @@ void Coap::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
             SuccessOrExit(error = otCoapMessageSetPayloadMarker(responseMessage));
             // scnm test begin
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-            SuccessOrExit(error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
+            SuccessOrExit(
+                error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
 #else
             SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
 #endif
             // scnm test end
-            //SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
+            // SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
         }
 
         SuccessOrExit(error = otCoapSendResponseWithParameters(mInterpreter.mInstance, responseMessage, aMessageInfo,
