@@ -28,8 +28,6 @@ pipeline
         MAIL_SENDER = "jenkins@srv-lab-t-002.zhaw.ch"
         MAIL_FAILED_SUBJECT = "Failed: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
         MAIL_BODY = "ERROR: Building Project. Check consol output at: ${env.BUILD_URL}"
-
-        MAKE_VARS=' '
         
         // global vars
         SERVER_DEV_JLINK_ID="801007266"
@@ -138,21 +136,12 @@ pipeline
         
         // Test code
         
-        stage('Bootstrap')
-        {
-            steps
-            {
-                echo 'bootstrap...'
-                sh "./bootstrap"
-            }
-        }
-        
         stage('Build Target')
         {
             steps
             {
                 echo 'build NRF52840'
-                sh "./bootstrap && make ${env.MAKE_VARS} -f examples/Makefile-nrf52840 COAPS=1 COAP=1 COAP_BLOCK=1 JOINER=1"
+                sh "./bootstrap && make -f examples/Makefile-nrf52840 COAPS=1 COAP=1 COAP_BLOCK=1 JOINER=1"
                 sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-mtd"
                 //sh "arm-none-eabi-size output/nrf52840/bin/ot-cli-ftd"
                 echo 'Binary to ihex (Minimal Thread Device)'
@@ -209,61 +198,6 @@ pipeline
                 sh "python3 .tests/test_cli_cmd.py 'ipaddr add '${env.CLIENTDEVICE_IP} 'Done' ${env.TTY_CLIENTDEVICE}"
             }
         }
-
-        stage('CLI: Run CoAP Secure block-wise Transfer')
-        {
-            steps
-            {
-                echo 'Set CoAPs Ciphersuite'
-                sh "python3 .tests/test_cli_cmd.py 'coaps x509' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'coaps x509' 'Done' ${env.TTY_SERVERDEVICE}"
-                
-                echo 'Start CoAPs'
-                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'coaps start' 'Done' ${env.TTY_SERVERDEVICE}"
-                
-                echo 'Create CoAPs Resource on FTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps resource test-resource' 'Done' ${env.TTY_SERVERDEVICE}"
-                
-                echo 'Connect to FTD CoAPs Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps connect ${env.SERVERDEVICE_IP}' 'coaps connected' ${env.TTY_CLIENTDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Test GET to FTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps get test-resource con' 'coaps response from ' ${env.TTY_CLIENTDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Test PUT to FTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps put test-resource con test-payload' 'coaps response from ' ${env.TTY_CLIENTDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Test POST to FTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps post test-resource con test-payload' 'coaps response from ' ${env.TTY_CLIENTDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Create CoAPs Resource on MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps resource test-resource' 'Done' ${env.TTY_CLIENTDEVICE}"
-                
-                echo 'Test GET to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps get test-resource con' 'coaps response from ' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Test PUT to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps put test-resource con test-payload' 'coaps response from ' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Test POST to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps post test-resource con test-payload' 'coaps response from ' ${env.TTY_SERVERDEVICE} true"
-                sh "sleep 3"
-                
-                echo 'Disconnect to FTD CoAPs Server'
-                sh "python3 .tests/test_cli_cmd.py 'coaps disconnect' 'coaps disconnected' ${env.TTY_CLIENTDEVICE} true"
-                
-                echo 'Stop CoAPs'
-                sh "python3 .tests/test_cli_cmd.py 'coaps stop' 'Done' ${env.TTY_CLIENTDEVICE} true"
-                sh "python3 .tests/test_cli_cmd.py 'coaps stop' 'Done' ${env.TTY_SERVERDEVICE} true"
-            }
-        }
         
         stage('CLI: Run CoAP block-wise Transfer')
         {
@@ -276,35 +210,90 @@ pipeline
                 echo 'Create CoAP Resource on FTD Server'
                 sh "python3 .tests/test_cli_cmd.py 'coap resource test-resource' 'Done' ${env.TTY_SERVERDEVICE}"
                 
-                echo 'Test PUT to FTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap put ${env.SERVERDEVICE_IP} test-resource con test-payload' 'Done' ${env.TTY_CLIENTDEVICE} true"
-                sh "sleep 3"
-                
                 echo 'Test GET to FTD Server'
                 sh "python3 .tests/test_cli_cmd.py 'coap get ${env.SERVERDEVICE_IP} test-resource con' 'test-payload correct' ${env.TTY_CLIENTDEVICE} true"
                 sh "sleep 3"
                 
+                echo 'Test PUT to FTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coap put ${env.SERVERDEVICE_IP} test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "sleep 3"
+                
                 echo 'Test POST to FTD Server'
-               sh "python3 .tests/test_cli_cmd.py 'coap post ${env.SERVERDEVICE_IP} test-resource con test-payload' 'Done' ${env.TTY_CLIENTDEVICE} true"
+               sh "python3 .tests/test_cli_cmd.py 'coap post ${env.SERVERDEVICE_IP} test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
                 sh "sleep 3"
                 
                 echo 'Create CoAP Resource on MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap resource test-resource' 'Done' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap resource test-resource' '' ${env.TTY_CLIENTDEVICE} true"
                 
                 echo 'Test GET to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap get ${env.CLIENTDEVICE_IP} test-resource con' 'test-payload correct' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap get ${env.CLIENTDEVICE_IP} test-resource con' '' ${env.TTY_SERVERDEVICE} true"
                 
                 echo 'Test PUT to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap put ${env.CLIENTDEVICE_IP} test-resource con test-payload' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap put ${env.CLIENTDEVICE_IP} test-resource con test-payload' '' ${env.TTY_SERVERDEVICE} true"
                 
                 echo 'Test POST to MTD Server'
-                sh "python3 .tests/test_cli_cmd.py 'coap post ${env.CLIENTDEVICE_IP} test-resource con test-payload' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap post ${env.CLIENTDEVICE_IP} test-resource con test-payload' '' ${env.TTY_SERVERDEVICE} true"
                 
                 echo 'Stop CoAP'
-                sh "python3 .tests/test_cli_cmd.py 'coap stop' 'Done' ${env.TTY_CLIENTDEVICE}"
-                sh "python3 .tests/test_cli_cmd.py 'coap stop' 'Done' ${env.TTY_SERVERDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap stop' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coap stop' '' ${env.TTY_SERVERDEVICE}"
                 
                 sh "sleep 5"
+            }
+        }
+
+        stage('CLI: Run CoAP Secure block-wise Transfer')
+        {
+            steps
+            {
+                echo 'Set CoAPs Ciphersuite'
+                sh "python3 .tests/test_cli_cmd.py 'coaps x509' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coaps x509' '' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'Start CoAPs'
+                sh "python3 .tests/test_cli_cmd.py 'coaps start' '' ${env.TTY_CLIENTDEVICE}"
+                sh "python3 .tests/test_cli_cmd.py 'coaps start' '' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'Create CoAPs Resource on FTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps resource test-resource' '' ${env.TTY_SERVERDEVICE}"
+                
+                echo 'Connect to FTD CoAPs Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps connect ${env.SERVERDEVICE_IP}' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Test PUT to FTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps put test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Test GET to FTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps get test-resource con' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Test POST to FTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps post test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Create CoAPs Resource on MTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps resource test-resource' '' ${env.TTY_CLIENTDEVICE}"
+                
+                echo 'Test GET to MTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps get test-resource con' '' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Test PUT to MTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps put test-resource con test-payload' '' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Test POST to MTD Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps post test-resource con test-payload' '' ${env.TTY_SERVERDEVICE} true"
+                sh "sleep 3"
+                
+                echo 'Disconnect to FTD CoAPs Server'
+                sh "python3 .tests/test_cli_cmd.py 'coaps disconnect' '' ${env.TTY_CLIENTDEVICE} true"
+                
+                echo 'Stop CoAPs'
+                sh "python3 .tests/test_cli_cmd.py 'coaps stop' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'coaps stop' '' ${env.TTY_SERVERDEVICE} true"
             }
         }
 

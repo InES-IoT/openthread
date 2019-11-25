@@ -131,8 +131,10 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
     uint16_t bytesToPrint;
     uint16_t bytesPrinted = 0;
     uint16_t length       = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
-
-    if (length > 0)
+    // scnm test begin
+    bool payloadCorrect = true;
+    // scnm test end
+    /*if (length > 0)
     {
         mInterpreter.mServer->OutputFormat(" with payload: ");
 
@@ -152,6 +154,61 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
                 mInterpreter.mServer->OutputFormat("\r\n");
             }
             // scnm test end
+        }
+    }*/
+
+    if (length > 0)
+    {
+        mInterpreter.mServer->OutputFormat(" with payload: ");
+
+        // scnm test begin
+        if ((otMessageGetLength(aMessage) - otMessageGetOffset(aMessage)) >
+            (1 << (4 + otCoapGetMaxBlockSize(mInterpreter.mInstance))))
+        {
+            while (length > 0)
+            {
+                bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
+                otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
+
+                if (memcmp(buf, TEST_BLOCK_WISE_PAYLOAD + bytesPrinted, bytesToPrint) != 0)
+                {
+                    payloadCorrect = false;
+                    break;
+                }
+
+                length -= bytesToPrint;
+                bytesPrinted += bytesToPrint;
+            }
+
+            if (payloadCorrect)
+            {
+                mInterpreter.mServer->OutputFormat("test-payload correct");
+            }
+            else
+            {
+                mInterpreter.mServer->OutputFormat("test-payload incorrect");
+            }
+        }
+        else
+        {
+        // scnm test end
+            while (length > 0)
+            {
+                bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
+                otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
+
+                mInterpreter.OutputBytes(buf, static_cast<uint8_t>(bytesToPrint));
+
+                length -= bytesToPrint;
+                bytesPrinted += bytesToPrint;
+
+                // scnm test begin
+                if (bytesPrinted % (4 * kMaxBufferSize) == 0)
+                {
+                    mInterpreter.mServer->OutputFormat("\r\n");
+                }
+                // scnm test end
+            }
         }
     }
 
