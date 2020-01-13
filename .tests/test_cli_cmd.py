@@ -161,7 +161,7 @@ def main(argv):
             parseError = False
 
         try:
-            cmd = serialUart.read(1000)
+            cmd = serialUart.read_until(argv[2], 100)
         except Exception as e:
             print("Cant read answer: " + e)
             errorCnt += 1

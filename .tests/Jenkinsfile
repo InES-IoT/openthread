@@ -219,7 +219,7 @@ pipeline
                 sh "sleep 3"
                 
                 echo 'Test POST to FTD Server'
-               sh "python3 .tests/test_cli_cmd.py 'coap post ${env.SERVERDEVICE_IP} test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
+                sh "python3 .tests/test_cli_cmd.py 'coap post ${env.SERVERDEVICE_IP} test-resource con test-payload' '' ${env.TTY_CLIENTDEVICE} true"
                 sh "sleep 3"
                 
                 echo 'Create CoAP Resource on MTD Server'
