@@ -159,9 +159,9 @@ otError CoapSecure::SendMessage(Message &aMessage, otCoapResponseHandler aHandle
     VerifyOrExit(IsConnected(), error = OT_ERROR_INVALID_STATE);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_512)
+    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_1024)
     {
-        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_512);
+        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_1024);
     }
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
@@ -177,9 +177,9 @@ otError CoapSecure::SendMessage(Message &               aMessage,
                                 void *                  aContext)
 {
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_512)
+    if (CoapBase::GetMaxBlockSize() > OT_COAP_OPTION_BLOCK_LENGTH_1024)
     {
-        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_512);
+        CoapBase::SetMaxBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_1024);
     }
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 

@@ -222,39 +222,11 @@ otError Message::AppendBlockOption(otCoapOptionType      aBlockType,
                                    otCoapOptionBlockSize aBlockSize)
 {
     otError  error                     = OT_ERROR_NONE;
-    uint16_t length                    = 0;
     uint32_t optionValue               = 0;
-    uint8_t  buf[kMaxOptionHeaderSize] = {0};
 
     optionValue = (aBlockNumber << 4) + (uint32_t)(aMoreBlocks << 3) + aBlockSize;
 
-    if (aBlockNumber <= 0x0f)
-    {
-        length = 1;
-        buf[0] = optionValue & 0x000000ff;
-    }
-    else if (aBlockNumber <= 0x0fff)
-    {
-        length = 2;
-        buf[0] = (optionValue & 0x0000ff00) >> 8;
-        buf[1] = optionValue & 0x000000ff;
-    }
-    else if (aBlockNumber <= 0x0fffff)
-    {
-        length = 3;
-        buf[0] = (optionValue & 0x00ff0000) >> 16;
-        buf[1] = (optionValue & 0x0000ff00) >> 8;
-        buf[2] = optionValue & 0x000000ff;
-    }
-    else
-    {
-        error = OT_ERROR_INVALID_ARGS;
-        ExitNow();
-    }
-
-    error = AppendOption(aBlockType, length, buf);
-
-exit:
+    error = AppendUintOption(aBlockType, optionValue);
 
     return error;
 }

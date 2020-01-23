@@ -746,7 +746,7 @@ private:
                                      otError                 aResult);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    otError InitiateBlockWiseTransfer(Message &aMessage, Message &aMessageOut);
+    otError InitiateBlockWiseTransfer(Message *aMessage, Message *aMessageOut);
     otError FinishBlock1Transfer(Message &aMessage, Message &aMessageOut);
     void    FinalizeCoapBlockWiseTransaction(Message *               aLastBlock,
                                              const Ip6::MessageInfo *aMessageInfo,
@@ -755,7 +755,7 @@ private:
                                              const char *            aUri);
     void    FreeLastBlockResponse(void);
     void    CleanupBlockWiseTransfer(void);
-    otError CacheLastBlockResponse(Message &aResponse);
+    otError CacheLastBlockResponse(Message *aResponse);
 
     otError ProcessBlock1Response(Message &aRequest, Message &aResponse);
     otError ProcessBlock2Response(Message &aRequest, Message &aResponse);

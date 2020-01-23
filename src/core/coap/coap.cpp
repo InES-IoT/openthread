@@ -148,7 +148,6 @@ otError CoapBase::SendMessage(Message &               aMessage,
     Message *    message    = NULL;
     Message *    storedCopy = NULL;
     uint16_t     copyLength = 0;
-    otLogDebgCoap("&aHandler: %x", &aHandler);
 
     // Check if is block-wise transfer necessary
     if ((aMessage.GetLength() - aMessage.GetHeaderLength() > 1 << (4 + mCurrentMaxBlockSize)) ||
