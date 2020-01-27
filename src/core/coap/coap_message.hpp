@@ -414,7 +414,7 @@ public:
     /**
      * This function reads the information contained in a Block1 or Block2 option.
      *
-     * @param[in]   aOptionLength   Length of option value.
+     * @param[in]   aBlockType      Block1 or Block2 option value.
      * @param[out]  aBlockNumber    The relative number of the block within a sequence of blocks.
      * @param[out]  aMoreBlocks     More blocks are following.
      * @param[out]  aBlockSize      One of the block lengths listed in
@@ -424,7 +424,7 @@ public:
      * @retval  OT_ERROR_NOT_FOUND      The option has not been found.
      * @retval  OT_ERROR_INVALID_ARGS   The option is invalid.
      */
-    otError ReadBlockOptionValues(uint16_t               aOptionLength,
+    otError ReadBlockOptionValues(otCoapOptionType       aBlockType,
                                   uint32_t *             aBlockNumber,
                                   bool *                 aMoreBlocks,
                                   otCoapOptionBlockSize *aBlockSize);
@@ -434,13 +434,13 @@ public:
      * This function reads the information contained in a Block1 or Block2 option and set it in
      * the HelpData of the message.
      *
-     * @param[in]   aOptionLength   Length of option value.
+     * @param[in]   aBlockType  Block1 or Block2 option value.
      *
      * @retval  OT_ERROR_NONE           The option has been found and is valid.
      * @retval  OT_ERROR_NOT_FOUND      The option has not been found.
      * @retval  OT_ERROR_INVALID_ARGS   The option is invalid.
      */
-    otError ReadBlockOptionValues(uint16_t aOptionLength);
+    otError ReadBlockOptionValues(otCoapOptionType aBlockType);
 
     /**
      * This method returns the current header length of a message.
@@ -777,6 +777,13 @@ public:
      *
      */
     otError GetOptionValue(void *aValue) const;
+
+    /**
+     * This function returns a pointer to the otCoapOption that matches aNumber
+     *
+     * @returns A pointer to the wanted option. If this option is not present NULL pointer is returned.
+     */
+    const otCoapOption *GetOptionByNumber(uint16_t aNumber);
 
 private:
     void           ClearOption(void) { memset(&mOption, 0, sizeof(mOption)); }

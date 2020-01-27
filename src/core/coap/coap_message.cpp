@@ -56,7 +56,7 @@ void Message::Init(void)
     SetBlockWiseBlockNumber(0);
     SetMoreBlocksFlag(false);
     SetBlockWiseBlockSize(OT_COAP_OPTION_BLOCK_LENGTH_16);
-#endif
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 }
 
 void Message::Init(Type aType, Code aCode)
@@ -221,8 +221,8 @@ otError Message::AppendBlockOption(otCoapOptionType      aBlockType,
                                    bool                  aMoreBlocks,
                                    otCoapOptionBlockSize aBlockSize)
 {
-    otError  error                     = OT_ERROR_NONE;
-    uint32_t optionValue               = 0;
+    otError  error       = OT_ERROR_NONE;
+    uint32_t optionValue = 0;
 
     optionValue = (aBlockNumber << 4) + (uint32_t)(aMoreBlocks << 3) + aBlockSize;
 
@@ -247,17 +247,24 @@ otError Message::AppendUriQueryOption(const char *aUriQuery)
 }
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-otError Message::ReadBlockOptionValues(uint16_t aOptionLength)
+otError Message::ReadBlockOptionValues(otCoapOptionType aBlockType)
 {
-    otError error                     = OT_ERROR_NONE;
-    uint8_t buf[kMaxOptionHeaderSize] = {0};
+    otError             error                     = OT_ERROR_NONE;
+    uint8_t             buf[kMaxOptionHeaderSize] = {0};
+    const otCoapOption *option                    = NULL;
+    OptionIterator      iterator;
 
-    SuccessOrExit(error = GetOptionValue(buf));
+    VerifyOrExit((aBlockType == OT_COAP_OPTION_BLOCK1) || (aBlockType == OT_COAP_OPTION_BLOCK2),
+                 error = OT_ERROR_INVALID_ARGS);
+
+    SuccessOrExit(error = iterator.Init(this));
+    VerifyOrExit((option = iterator.GetOptionByNumber(aBlockType)) != NULL, error = OT_ERROR_NOT_FOUND);
+    SuccessOrExit(error = iterator.GetOptionValue(buf));
 
     SetBlockWiseBlockNumber(0);
     SetMoreBlocksFlag(false);
 
-    switch (aOptionLength)
+    switch (option->mLength)
     {
     case 1:
         SetBlockWiseBlockNumber((buf[0] & 0xf0) >> 4);
@@ -291,22 +298,29 @@ otError Message::ReadBlockOptionValues(uint16_t aOptionLength)
 exit:
     return error;
 }
-#endif
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
-otError Message::ReadBlockOptionValues(uint16_t               aOptionLength,
+otError Message::ReadBlockOptionValues(otCoapOptionType       aBlockType,
                                        uint32_t *             aBlockNumber,
                                        bool *                 aMoreBlocks,
                                        otCoapOptionBlockSize *aBlockSize)
 {
-    otError error                     = OT_ERROR_NONE;
-    uint8_t buf[kMaxOptionHeaderSize] = {0};
+    otError             error                     = OT_ERROR_NONE;
+    uint8_t             buf[kMaxOptionHeaderSize] = {0};
+    const otCoapOption *option                    = NULL;
+    OptionIterator      iterator;
 
-    SuccessOrExit(error = GetOptionValue(buf));
+    VerifyOrExit((aBlockType == OT_COAP_OPTION_BLOCK1) || (aBlockType == OT_COAP_OPTION_BLOCK2),
+                 error = OT_ERROR_INVALID_ARGS);
+
+    SuccessOrExit(error = iterator.Init(this));
+    VerifyOrExit((option = iterator.GetOptionByNumber(aBlockType)) != NULL, error = OT_ERROR_NOT_FOUND);
+    SuccessOrExit(error = iterator.GetOptionValue(buf));
 
     *aBlockNumber = 0;
     *aMoreBlocks  = false;
 
-    switch (aOptionLength)
+    switch (option->mLength)
     {
     case 1:
         *aBlockNumber = (buf[0] & 0xf0) >> 4;
@@ -343,10 +357,13 @@ exit:
 
 otError Message::GetUriPath(char *aUriPath)
 {
-    otError error      = OT_ERROR_NONE;
-    char *  curUriPath = aUriPath;
+    otError        error      = OT_ERROR_NONE;
+    char *         curUriPath = aUriPath;
+    OptionIterator iterator;
 
-    for (const otCoapOption *option = GetFirstOption(); option != NULL; option = GetNextOption())
+    SuccessOrExit(error = iterator.Init(this));
+
+    for (const otCoapOption *option = iterator.GetFirstOption(); option != NULL; option = iterator.GetNextOption())
     {
         switch (option->mNumber)
         {
@@ -364,7 +381,7 @@ otError Message::GetUriPath(char *aUriPath)
                              Resource::kMaxReceivedUriPath - static_cast<size_t>(curUriPath + 1 - aUriPath),
                          error = OT_ERROR_NO_BUFS);
 
-            GetOptionValue(curUriPath);
+            iterator.GetOptionValue(curUriPath);
             curUriPath += option->mLength;
             break;
         default:
@@ -701,6 +718,16 @@ otError OptionIterator::GetOptionValue(void *aValue) const
 
 exit:
     return error;
+}
+
+const otCoapOption *OptionIterator::GetOptionByNumber(uint16_t aNumber)
+{
+    const otCoapOption *option = NULL;
+
+    for (option = GetFirstOption(); (option != NULL) && (option->mNumber != aNumber); option = GetNextOption())
+        ;
+
+    return option;
 }
 
 } // namespace Coap
