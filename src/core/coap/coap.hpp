@@ -192,6 +192,10 @@ private:
     uint8_t               mRetransmissionsRemaining; ///< Number of retransmissions remaining.
     bool                  mAcknowledged : 1;         ///< Information that request was acknowledged.
     bool                  mConfirmable : 1;          ///< Information that message is confirmable.
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    otCoapBlockwiseReceiveHook  mBlockwiseReceiveHook;  ///< A function pointer that is called on Block2 response reception.
+    otCoapBlockwiseTransmitHook mBlockwiseTransmitHook; ///< A function pointer that is called on Block1 response reception.
+#endif
 };
 
 /**
@@ -222,6 +226,26 @@ public:
         mContext = aContext;
         mNext    = NULL;
     }
+
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    /**
+     * This constructor initializes the resource.
+     *
+     * @param[in]  aUriPath  A pointer to a NULL-terminated string for the Uri-Path.
+     * @param[in]  aHandler  A function pointer that is called when receiving a CoAP message for @p aUriPath.
+     * @param[in]  aContext  A pointer to arbitrary context information.
+     * @param[in]  aHook     A function pointer that is called when receiving a CoAP block message for @p aUriPath.
+     */
+    Resource(const char *aUriPath, otCoapRequestHandler aHandler, void *aContext, otCoapBlockwiseReceiveHook aReceiveHook, otCoapBlockwiseTransmitHook aTransmitHook)
+    {
+        mUriPath      = aUriPath;
+        mHandler      = aHandler;
+        mContext      = aContext;
+        mReceiveHook  = aReceiveHook;
+        mTransmitHook = aTransmitHook;
+        mNext         = NULL;
+    }
+#endif
 
     /**
      * This method returns a pointer to the Uri-Path.

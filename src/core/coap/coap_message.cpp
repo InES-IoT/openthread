@@ -268,27 +268,18 @@ otError Message::ReadBlockOptionValues(otCoapOptionType aBlockType)
     {
     case 1:
         SetBlockWiseBlockNumber((buf[0] & 0xf0) >> 4);
-        if ((buf[0] & 0x08) >> 3 == 1)
-        {
-            SetMoreBlocksFlag(true);
-        }
-        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[0] & 0x07));
+        SetMoreBlocksFlag(static_cast<bool>((buf[0] & 0x08) >> 3 == 1));
+        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSize>(buf[0] & 0x07));
         break;
     case 2:
         SetBlockWiseBlockNumber((buf[0] << 4) + ((buf[1] & 0xf0) >> 4));
-        if ((buf[1] & 0x08) >> 3 == 1)
-        {
-            SetMoreBlocksFlag(true);
-        }
-        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[1] & 0x07));
+        SetMoreBlocksFlag(static_cast<bool>((buf[1] & 0x08) >> 3 == 1));
+        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSize>(buf[1] & 0x07));
         break;
     case 3:
         SetBlockWiseBlockNumber((buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4));
-        if ((buf[2] & 0x08) >> 3 == 1)
-        {
-            SetMoreBlocksFlag(true);
-        }
-        SetBlockWiseBlockSize((otCoapOptionBlockSize)(buf[2] & 0x07));
+        SetMoreBlocksFlag(static_cast<bool>((buf[2] & 0x08) >> 3 == 1));
+        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSize>(buf[2] & 0x07));
         break;
     default:
         error = OT_ERROR_INVALID_ARGS;
@@ -324,27 +315,18 @@ otError Message::ReadBlockOptionValues(otCoapOptionType       aBlockType,
     {
     case 1:
         *aBlockNumber = (buf[0] & 0xf0) >> 4;
-        if ((buf[0] & 0x08) >> 3 == 1)
-        {
-            *aMoreBlocks = true;
-        }
-        *aBlockSize = (otCoapOptionBlockSize)(buf[0] & 0x07);
+        *aMoreBlocks = static_cast<bool>((buf[0] & 0x08) >> 3 == 1);
+        *aBlockSize = static_cast<otCoapOptionBlockSize>(buf[0] & 0x07);
         break;
     case 2:
         *aBlockNumber = ((uint32_t)buf[0] << 4) + (((uint32_t)buf[1] & 0xf0) >> 4);
-        if ((buf[1] & 0x08) >> 3 == 1)
-        {
-            *aMoreBlocks = true;
-        }
-        *aBlockSize = (otCoapOptionBlockSize)(buf[1] & 0x07);
+        *aMoreBlocks = static_cast<bool>((buf[1] & 0x08) >> 3 == 1);
+        *aBlockSize = static_cast<otCoapOptionBlockSize>(buf[1] & 0x07);
         break;
     case 3:
         *aBlockNumber = ((uint32_t)buf[0] << 12) + ((uint32_t)buf[1] << 4) + (((uint32_t)buf[2] & 0xf0) >> 4);
-        if ((buf[2] & 0x08) >> 3 == 1)
-        {
-            *aMoreBlocks = true;
-        }
-        *aBlockSize = (otCoapOptionBlockSize)(buf[2] & 0x07);
+        *aMoreBlocks = static_cast<bool>((buf[2] & 0x08) >> 3 == 1);
+        *aBlockSize = static_cast<otCoapOptionBlockSize>(buf[2] & 0x07);
         break;
     default:
         error = OT_ERROR_INVALID_ARGS;

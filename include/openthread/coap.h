@@ -350,6 +350,45 @@ typedef void (*otCoapResponseHandler)(void *               aContext,
  */
 typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
+// scnm test begin
+/**
+ * This function pointer is called when a CoAP message with an blockwise transfer option is received.
+ *
+ * @param[in]  aBlock       A pointer to the block segment.
+ * @param[in]  aPosition    The position of @p aBlock in a sequence in bytes.
+ * @param[in]  aBlockLength The length of the block segment.
+ * @param[in]  aMore        Flag if more block segments are following.
+ * @param[in]  aTotalLength The total length in bytes of the transfered information (indicated by a Size1 or Size2 option).
+ *
+ * @retval  OT_ERROR_NONE               Block segment was stored successfully.
+ * @retval  OT_ERROR_NO_BUFS            No more memory to store blocks.
+ * @retval  OT_ERROR_NO_FRAME_RECEIVED  Block segment missing.
+ *
+ */
+typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
+                                              uint32_t       aOffset,
+                                              uint16_t       aBlockLength,
+                                              bool           aMore,
+                                              uint32_t       aTotalLength);
+
+/**
+ * This function pointer is called before the next block in a blockwise transfer is sent.
+ *
+ * @param[out]      aBlock       A pointer to the block segment to sent.
+ * @param[in]       aPosition    The position in a sequence from which to obtain the block segment.
+ * @param[inout]    aBlockLength On entry, the maximum block segment length.
+ * @param[out]      aMore        A pointer to the flag if more block segments will follow.
+ *
+ * @retval  OT_ERROR_NONE           No error occurred.
+ * @retval  OT_ERROR_INVALID_ARGS   Block at @p aPosition does not exist.
+ *
+ */
+typedef otError (*otCoapBlockwiseTransmitHook)(uint8_t * aBlock,
+                                               uint32_t  aPosition,
+                                               uint16_t *aBlockLength,
+                                               bool *    aMore);
+// scnm test end
+
 /**
  * This structure represents a CoAP resource.
  *
@@ -360,6 +399,10 @@ typedef struct otCoapResource
     otCoapRequestHandler   mHandler; ///< The callback for handling a received request
     void *                 mContext; ///< Application-specific context
     struct otCoapResource *mNext;    ///< The next CoAP resource in the list
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    otCoapBlockwiseReceiveHook  mReceiveHook;  ///< The callback for handling incoming blockwise transfer.
+    otCoapBlockwiseTransmitHook mTransmitHook; ///< The callback for handling outgoing blockwise transfer.
+#endif
 } otCoapResource;
 
 /**
