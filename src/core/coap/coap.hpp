@@ -122,12 +122,37 @@ public:
         : mDestinationPort(0)
         , mResponseHandler(NULL)
         , mResponseContext(NULL)
+        //#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+        , mBlockwiseReceiveHook(NULL)
+        , mBlockwiseTransmitHook(NULL)
+        //#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
         , mNextTimerShot(0)
         , mRetransmissionTimeout(0)
         , mRetransmissionsRemaining(0)
         , mAcknowledged(false)
         , mConfirmable(false){};
 
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    /**
+     * This constructor initializes the object with specific values.
+     *
+     * @param[in]  aConfirmable  Information if the request is confirmable or not.
+     * @param[in]  aMessageInfo  Addressing information.
+     * @param[in]  aHandler      Pointer to a handler function for the response.
+     * @param[in]  aContext      Context for the handler function.
+     * @param[in]  aTxParameters Transmission parameters.
+     * @param[in]  aReceiveHook  Pointer to a hook function for incoming blockwise transfer.
+     * @param[in]  aTransmitHook Pointer to a hook function for outgoing blockwise transfer.
+     *
+     */
+    CoapMetadata(bool                        aConfirmable,
+                 const Ip6::MessageInfo &    aMessageInfo,
+                 otCoapResponseHandler       aHandler,
+                 void *                      aContext,
+                 const CoapTxParameters &    aTxParameters,
+                 otCoapBlockwiseReceiveHook  aReceiveHook,
+                 otCoapBlockwiseTransmitHook aTransmitHook);
+#else
     /**
      * This constructor initializes the object with specific values.
      *
@@ -143,6 +168,7 @@ public:
                  otCoapResponseHandler   aHandler,
                  void *                  aContext,
                  const CoapTxParameters &aTxParameters);
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
     /**
      * This method appends request data to the message.
@@ -681,14 +707,14 @@ public:
      *
      * @param[in]  aBlockSize The maximal allowed block size.
      */
-    void SetMaxBlockSize(otCoapOptionBlockSize aBlockSize) { mCurrentMaxBlockSize = aBlockSize; }
+    void SetMaxBlockSize(otCoapOptionBlockSzx aBlockSize) { mCurrentMaxBlockSize = aBlockSize; }
 
     /**
      * This method returns the current set maximum block size for CoAP/-s Block-Wise Transfer.
      *
      * @retval The current set maximum block size.
      */
-    otCoapOptionBlockSize GetMaxBlockSize(void) { return mCurrentMaxBlockSize; }
+    otCoapOptionBlockSzx GetMaxBlockSize(void) { return mCurrentMaxBlockSize; }
 #endif
 
     /**
@@ -781,26 +807,28 @@ private:
     void    CleanupBlockWiseTransfer(void);
     otError CacheLastBlockResponse(Message *aResponse);
 
-    otError ProcessBlock1Response(Message &aRequest, Message &aResponse);
-    otError ProcessBlock2Response(Message &aRequest, Message &aResponse);
-    otError ProcessBlock1Request(Message &aRequest, const Ip6::MessageInfo &aMessageInfo);
-    otError ProcessBlock2Request(Message &aRequest, const Ip6::MessageInfo &aMessageInfo);
+    otError ProcessBlock1Request(Message &                  aMessage,
+                                 const Ip6::MessageInfo &   aMessageInfo,
+                                 otCoapBlockwiseReceiveHook aReceiveHook,
+                                 uint32_t                   aTotalLength);
+    otError ProcessBlock2Request(Message &                   aMessage,
+                                 const Ip6::MessageInfo &    aMessageInfo,
+                                 otCoapBlockwiseTransmitHook aTransmitHook);
 #endif
     void ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
     void ProcessReceivedResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     otError SendNextBlock1Request(Message &               aRequest,
+                                  Message &               aMessage,
                                   const Ip6::MessageInfo &aMessageInfo,
-                                  const CoapMetadata &    aCoapMetadata,
-                                  uint32_t                aBlockNumber,
-                                  otCoapOptionBlockSize   aBlockSize);
+                                  const CoapMetadata &    aCoapMetadata);
     otError SendNextBlock2Request(Message &               aRequest,
+                                  Message &               aMessage,
                                   const Ip6::MessageInfo &aMessageInfo,
                                   const CoapMetadata &    aCoapMetadata,
-                                  uint32_t                aBlockNumber,
-                                  otCoapOptionBlockSize   aBlockSize);
-#endif
+                                  uint32_t                aTotalLength);
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     otError SendCopy(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
     otError SendEmptyMessage(Message::Type aType, const Message &aRequest, const Ip6::MessageInfo &aMessageInfo);
 
@@ -835,15 +863,11 @@ private:
     Sender mSender;
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    otCoapOptionBlockSize mCurrentMaxBlockSize;
-    char                  mReassemblyMessage[kMaxBodyLength];
-    uint16_t              mReassemblyMessageLength;
-    char                  mDisassemblyMessage[kMaxBodyLength];
-    uint16_t              mDisassemblyMessageLength;
-    Message *             mLastResponse;
-    bool                  mIsBlockWiseTransferActive;
-    bool                  mHasLastBlockBeenReceived; // Server only
-#endif
+    otCoapOptionBlockSzx mCurrentMaxBlockSize;
+    Message *            mLastResponse;
+    bool                 mIsBlockWiseTransferActive;
+    bool                 mHasLastBlockBeenReceived; // Server only
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 };
 
 /**

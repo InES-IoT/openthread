@@ -85,24 +85,6 @@ void otCoapMessageGenerateToken(otMessage *aMessage, uint8_t aTokenLength)
     static_cast<Coap::Message *>(aMessage)->SetToken(aTokenLength);
 }
 
-otError otCoapMessageAppendBlock1Option(otMessage *           aMessage,
-                                        uint32_t              aBlockNumber,
-                                        bool                  aMoreBlocks,
-                                        otCoapOptionBlockSize aBlockSize)
-{
-    return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(OT_COAP_OPTION_BLOCK1, aBlockNumber, aMoreBlocks,
-                                                                     aBlockSize);
-}
-
-otError otCoapMessageAppendBlock2Option(otMessage *           aMessage,
-                                        uint32_t              aBlockNumber,
-                                        bool                  aMoreBlocks,
-                                        otCoapOptionBlockSize aBlockSize)
-{
-    return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(OT_COAP_OPTION_BLOCK2, aBlockNumber, aMoreBlocks,
-                                                                     aBlockSize);
-}
-
 otError otCoapMessageAppendContentFormatOption(otMessage *aMessage, otCoapOptionContentFormat aContentFormat)
 {
     return static_cast<Coap::Message *>(aMessage)->AppendContentFormatOption(aContentFormat);
@@ -128,17 +110,17 @@ otError otCoapMessageAppendUriPathOptions(otMessage *aMessage, const char *aUriP
     return static_cast<Coap::Message *>(aMessage)->AppendUriPathOptions(aUriPath);
 }
 
-uint16_t otCoapBlockSizeFromExponent(otCoapBlockSize aSize)
+uint16_t otCoapBlockSizeFromExponent(otCoapBlockSzx aSize)
 {
     return static_cast<uint16_t>(1 << (aSize + Coap::Message::kBlockSzxBase));
 }
 
-otError otCoapMessageAppendBlock2Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSize aSize)
+otError otCoapMessageAppendBlock2Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSzx aSize)
 {
     return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(Coap::Message::kBlockType2, aNum, aMore, aSize);
 }
 
-otError otCoapMessageAppendBlock1Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSize aSize)
+otError otCoapMessageAppendBlock1Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSzx aSize)
 {
     return static_cast<Coap::Message *>(aMessage)->AppendBlockOption(Coap::Message::kBlockType1, aNum, aMore, aSize);
 }
@@ -213,18 +195,17 @@ otError otCoapOptionIteratorGetOptionValue(otCoapOptionIterator *aIterator, void
     return static_cast<Coap::OptionIterator *>(aIterator)->GetOptionValue(aValue);
 }
 
-otError otCoapSendRequestWithParameters(otInstance *              aInstance,
-                                        otMessage *               aMessage,
-                                        const otMessageInfo *     aMessageInfo,
-                                        otCoapResponseHandler     aHandler,
-                                        void *                    aContext,
-                                        const otCoapTxParameters *aTxParameters)
+otError otCoapSendRequest(otInstance *          aInstance,
+                          otMessage *           aMessage,
+                          const otMessageInfo * aMessageInfo,
+                          otCoapResponseHandler aHandler,
+                          void *                aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
     return instance.GetApplicationCoap().SendMessage(*static_cast<Coap::Message *>(aMessage),
-                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
-                                                     Coap::CoapTxParameters::From(aTxParameters), aHandler, aContext);
+                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo), aHandler,
+                                                     aContext);
 }
 
 otError otCoapStart(otInstance *aInstance, uint16_t aPort)
@@ -278,16 +259,12 @@ otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance)
 }
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
-otError otCoapSendResponseWithParameters(otInstance *              aInstance,
-                                         otMessage *               aMessage,
-                                         const otMessageInfo *     aMessageInfo,
-                                         const otCoapTxParameters *aTxParameters)
+otError otCoapSendResponse(otInstance *aInstance, otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
     return instance.GetApplicationCoap().SendMessage(*static_cast<Coap::Message *>(aMessage),
-                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
-                                                     Coap::CoapTxParameters::From(aTxParameters), NULL, NULL);
+                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo));
 }
 
 #endif // OPENTHREAD_CONFIG_COAP_API_ENABLE

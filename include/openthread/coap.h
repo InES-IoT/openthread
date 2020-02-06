@@ -147,16 +147,16 @@ typedef enum otCoapOptionType
 /**
  * CoAP Block Size Exponents
  */
-typedef enum otCoapBlockSize
+typedef enum otCoapOptionBlockSzx
 {
-    OT_COAP_BLOCK_SIZE_16   = 0,
-    OT_COAP_BLOCK_SIZE_32   = 1,
-    OT_COAP_BLOCK_SIZE_64   = 2,
-    OT_COAP_BLOCK_SIZE_128  = 3,
-    OT_COAP_BLOCK_SIZE_256  = 4,
-    OT_COAP_BLOCK_SIZE_512  = 5,
-    OT_COAP_BLOCK_SIZE_1024 = 6,
-} otCoapBlockSize;
+    OT_COAP_OPTION_BLOCK_SZX_16   = 0,
+    OT_COAP_OPTION_BLOCK_SZX_32   = 1,
+    OT_COAP_OPTION_BLOCK_SZX_64   = 2,
+    OT_COAP_OPTION_BLOCK_SZX_128  = 3,
+    OT_COAP_OPTION_BLOCK_SZX_256  = 4,
+    OT_COAP_OPTION_BLOCK_SZX_512  = 5,
+    OT_COAP_OPTION_BLOCK_SZX_1024 = 6
+} otCoapOptionBlockSzx;
 
 /**
  * This structure represents a CoAP option.
@@ -350,7 +350,7 @@ typedef void (*otCoapResponseHandler)(void *               aContext,
  */
 typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
-// scnm test begin
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 /**
  * This function pointer is called when a CoAP message with an blockwise transfer option is received.
  *
@@ -358,7 +358,8 @@ typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const 
  * @param[in]  aPosition    The position of @p aBlock in a sequence in bytes.
  * @param[in]  aBlockLength The length of the block segment.
  * @param[in]  aMore        Flag if more block segments are following.
- * @param[in]  aTotalLength The total length in bytes of the transfered information (indicated by a Size1 or Size2 option).
+ * @param[in]  aTotalLength The total length in bytes of the transfered information (indicated by a Size1 or Size2
+ * option).
  *
  * @retval  OT_ERROR_NONE               Block segment was stored successfully.
  * @retval  OT_ERROR_NO_BUFS            No more memory to store blocks.
@@ -366,7 +367,7 @@ typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const 
  *
  */
 typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
-                                              uint32_t       aOffset,
+                                              uint32_t       aPosition,
                                               uint16_t       aBlockLength,
                                               bool           aMore,
                                               uint32_t       aTotalLength);
@@ -387,7 +388,7 @@ typedef otError (*otCoapBlockwiseTransmitHook)(uint8_t * aBlock,
                                                uint32_t  aPosition,
                                                uint16_t *aBlockLength,
                                                bool *    aMore);
-// scnm test end
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 /**
  * This structure represents a CoAP resource.
@@ -806,6 +807,8 @@ otError otCoapSendRequestWithParameters(otInstance *              aInstance,
  * @param[in]  aMessageInfo  A pointer to the message info associated with @p aMessage.
  * @param[in]  aHandler      A function pointer that shall be called on response reception or timeout.
  * @param[in]  aContext      A pointer to arbitrary context information. May be NULL if not used.
+ * @param[in]  aTransmitHook A function pointer that is called on Block1 response reception.
+ * @param[in]  aReceiveHook  A function pointer that is called on Block2 response reception.
  *
  * @retval OT_ERROR_NONE    Successfully sent CoAP message.
  * @retval OT_ERROR_NO_BUFS Failed to allocate retransmission data.
@@ -879,7 +882,7 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aBlockSize The maximal allowed block size.
  */
-void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSize);
+void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSzx aBlockSize);
 
 /**
  * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
@@ -888,7 +891,7 @@ void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSi
  *
  * @retval The current set maximum block size.
  */
-otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance);
+otCoapOptionBlockSzx otCoapGetMaxBlockSize(otInstance *aInstance);
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 /**
