@@ -399,6 +399,7 @@ public:
      * @retval OT_ERROR_NONE          Successfully appended the option.
      * @retval OT_ERROR_INVALID_ARGS  The option type is not equal or greater than the last option type.
      * @retval OT_ERROR_NO_BUFS       The option length exceeds the buffer size.
+     *
      */
     otError AppendMaxAgeOption(uint32_t aMaxAge);
 
@@ -761,6 +762,7 @@ public:
      * This method returns a pointer to the first option.
      *
      * @returns A pointer to the first option. If no option is present NULL pointer is returned.
+     *
      */
     const otCoapOption *GetFirstOption(void);
 
@@ -768,6 +770,7 @@ public:
      * This method returns a pointer to the next option.
      *
      * @returns A pointer to the next option. If no more options are present NULL pointer is returned.
+     *
      */
     const otCoapOption *GetNextOption(void);
 
@@ -784,6 +787,7 @@ public:
      * This function returns a pointer to the otCoapOption that matches aNumber
      *
      * @returns A pointer to the wanted option. If this option is not present NULL pointer is returned.
+     *
      */
     const otCoapOption *GetOptionByNumber(uint16_t aNumber);
 

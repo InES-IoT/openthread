@@ -121,6 +121,18 @@ private:
 
     otCoapResource mResource;
     char           mUriPath[kMaxUriLength];
+
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+    otError BlockwiseReceiveHook(const uint8_t *aBlock,
+                                 uint32_t       aPosition,
+                                 uint16_t       aBlockLength,
+                                 bool           aMore,
+                                 uint32_t       aTotalLength);
+    otError BlockwiseTransmitHook(uint8_t * aBlock,
+                                  uint32_t  aPosition,
+                                  uint16_t *aBlockLength,
+                                  bool *    aMore);
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 };
 
 } // namespace Cli

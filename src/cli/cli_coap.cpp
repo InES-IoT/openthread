@@ -99,6 +99,10 @@ const struct Coap::Command Coap::sCommands[] = {
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 };
 
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+uint8_t ReceiveBuffer[4096] = {0};
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
 Coap::Coap(Interpreter &aInterpreter)
     : mInterpreter(aInterpreter)
     , mUseDefaultRequestTxParameters(true)
@@ -406,16 +410,7 @@ otError Coap::ProcessRequest(int argc, char *argv[])
     if (payloadLength > 0)
     {
         // scnm test begin
-#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-        if (strcmp(argv[4], "test-payload") == 0)
-        {
-            SuccessOrExit(error = otMessageAppend(message, TEST_BLOCK_WISE_PAYLOAD, payloadLength));
-        }
-        else
-        {
-            SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
-        }
-#else
+#if !OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
         SuccessOrExit(error = otMessageAppend(message, argv[4], payloadLength));
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
        // scnm test end
@@ -456,31 +451,31 @@ otError Coap::ProcessBlocksize(int argc, char *argv[])
     {
         if (strcmp(argv[1], "1024") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_1024);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_1024);
         }
         else if (strcmp(argv[1], "512") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_512);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_512);
         }
         else if (strcmp(argv[1], "256") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_256);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_256);
         }
         else if (strcmp(argv[1], "128") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_128);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_128);
         }
         else if (strcmp(argv[1], "64") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_64);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_64);
         }
         else if (strcmp(argv[1], "32") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_32);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_32);
         }
         else if (strcmp(argv[1], "16") == 0)
         {
-            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_LENGTH_16);
+            otCoapSetMaxBlockSize(mInterpreter.mInstance, OT_COAP_OPTION_BLOCK_SZX_16);
         }
         else
         {
@@ -586,10 +581,7 @@ void Coap::HandleRequest(otMessage *aMessage, const otMessageInfo *aMessageInfo)
         {
             SuccessOrExit(error = otCoapMessageSetPayloadMarker(responseMessage));
             // scnm test begin
-#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-            SuccessOrExit(
-                error = otMessageAppend(responseMessage, TEST_BLOCK_WISE_PAYLOAD, sizeof(TEST_BLOCK_WISE_PAYLOAD)));
-#else
+#if !OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
             SuccessOrExit(error = otMessageAppend(responseMessage, &responseContent, sizeof(responseContent)));
 #endif
             // scnm test end
@@ -637,6 +629,60 @@ void Coap::HandleResponse(otMessage *aMessage, const otMessageInfo *aMessageInfo
         PrintPayload(aMessage);
     }
 }
+
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+otError Coap::BlockwiseReceiveHook(const uint8_t *aBlock,
+                                   uint32_t       aPosition,
+                                   uint16_t       aBlockLength,
+                                   bool           aMore,
+                                   uint32_t       aTotalLength)
+{
+    otError error = OT_ERROR_NONE;
+
+    // If aTotalLength is given, check if entity fits in buffer
+    if (aTotalLength > 0)
+    {
+        VerifyOrExit(aTotalLength < 4096, error = OT_ERROR_NO_BUFS);
+    }
+
+    // Check if there is enough space to store block
+    VerifyOrExit(aPosition + aBlockLength < 4096, error = OT_ERROR_NO_BUFS);
+
+    // Write received block to buffer
+    memcpy(ReceiveBuffer, aBlock, static_cast<size_t>(aBlockLength));
+
+    // TODO: Check if received Block was the last one
+    OT_UNUSED_VARIABLE(aMore);
+
+exit:
+    return error;
+}
+
+otError Coap::BlockwiseTransmitHook(uint8_t *aBlock, uint32_t aPosition, uint16_t *aBlockLength, bool *aMore)
+{
+    otError error = OT_ERROR_NONE;
+
+    // Check if position of requested block is legit
+    VerifyOrExit(aPosition < sizeof(TEST_BLOCK_WISE_PAYLOAD), error = OT_ERROR_INVALID_ARGS);
+
+    // Check if this block is the last one
+    if(aPosition + *aBlockLength > sizeof(TEST_BLOCK_WISE_PAYLOAD))
+    {
+        *aBlockLength = sizeof(TEST_BLOCK_WISE_PAYLOAD) - aPosition;
+        *aMore = false;
+    }
+    else
+    {
+        *aMore = true;
+    }
+
+    // Write next block payload
+    memcpy(aBlock, TEST_BLOCK_WISE_PAYLOAD, *aBlockLength);
+
+exit:
+    return error;
+}
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 } // namespace Cli
 } // namespace ot

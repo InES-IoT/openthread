@@ -849,7 +849,7 @@ private:
     otError ProcessBlock2Request(Message &                   aMessage,
                                  const Ip6::MessageInfo &    aMessageInfo,
                                  otCoapBlockwiseTransmitHook aTransmitHook);
-#endif
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     void ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
     void ProcessReceivedResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 
