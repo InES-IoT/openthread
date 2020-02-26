@@ -145,20 +145,6 @@ typedef enum otCoapOptionType
 } otCoapOptionType;
 
 /**
- * CoAP Block Size Exponents
- */
-typedef enum otCoapOptionBlockSzx
-{
-    OT_COAP_OPTION_BLOCK_SZX_16   = 0,
-    OT_COAP_OPTION_BLOCK_SZX_32   = 1,
-    OT_COAP_OPTION_BLOCK_SZX_64   = 2,
-    OT_COAP_OPTION_BLOCK_SZX_128  = 3,
-    OT_COAP_OPTION_BLOCK_SZX_256  = 4,
-    OT_COAP_OPTION_BLOCK_SZX_512  = 5,
-    OT_COAP_OPTION_BLOCK_SZX_1024 = 6
-} otCoapOptionBlockSzx;
-
-/**
  * This structure represents a CoAP option.
  *
  */
@@ -323,6 +309,20 @@ typedef enum otCoapOptionContentFormat
 } otCoapOptionContentFormat;
 
 /**
+ * CoAP Block Size Exponents
+ */
+typedef enum otCoapBlockSzx
+{
+    OT_COAP_OPTION_BLOCK_SZX_16   = 0,
+    OT_COAP_OPTION_BLOCK_SZX_32   = 1,
+    OT_COAP_OPTION_BLOCK_SZX_64   = 2,
+    OT_COAP_OPTION_BLOCK_SZX_128  = 3,
+    OT_COAP_OPTION_BLOCK_SZX_256  = 4,
+    OT_COAP_OPTION_BLOCK_SZX_512  = 5,
+    OT_COAP_OPTION_BLOCK_SZX_1024 = 6
+} otCoapBlockSzx;
+
+/**
  * This function pointer is called when a CoAP response is received or on the request timeout.
  *
  * @param[in]  aContext      A pointer to application-specific context.
@@ -352,14 +352,14 @@ typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const 
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 /**
- * This function pointer is called when a CoAP message with an blockwise transfer option is received.
+ * This function pointer is called when a CoAP message with an block-wise transfer option is received.
  *
  * @param[in]  aBlock       A pointer to the block segment.
  * @param[in]  aPosition    The position of @p aBlock in a sequence in bytes.
  * @param[in]  aBlockLength The length of the block segment.
  * @param[in]  aMore        Flag if more block segments are following.
  * @param[in]  aTotalLength The total length in bytes of the transfered information (indicated by a Size1 or Size2
- * option).
+ *                          option).
  *
  * @retval  OT_ERROR_NONE               Block segment was stored successfully.
  * @retval  OT_ERROR_NO_BUFS            No more memory to store blocks.
@@ -373,9 +373,9 @@ typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
                                               uint32_t       aTotalLength);
 
 /**
- * This function pointer is called before the next block in a blockwise transfer is sent.
+ * This function pointer is called before the next block in a block-wise transfer is sent.
  *
- * @param[out]      aBlock       A pointer to the block segment to sent.
+ * @param[inout]    aBlock       A pointer to where the block segment can be written to.
  * @param[in]       aPosition    The position in a sequence from which to obtain the block segment.
  * @param[inout]    aBlockLength On entry, the maximum block segment length.
  * @param[out]      aMore        A pointer to the flag if more block segments will follow.
@@ -573,7 +573,7 @@ otError otCoapMessageAppendUriPathOptions(otMessage *aMessage, const char *aUriP
  * @returns The actual size exponent value.
  *
  */
-uint16_t otCoapBlockSizeFromExponent(otCoapBlockSize aSize);
+uint16_t otCoapBlockSizeFromExponent(otCoapBlockSzx aSize);
 
 /**
  * This function appends a Block2 option
@@ -588,7 +588,7 @@ uint16_t otCoapBlockSizeFromExponent(otCoapBlockSize aSize);
  * @retval OT_ERROR_NO_BUFS       The option length exceeds the buffer size.
  *
  */
-otError otCoapMessageAppendBlock2Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSize aSize);
+otError otCoapMessageAppendBlock2Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSzx aSize);
 
 /**
  * This function appends a Block1 option
@@ -603,7 +603,7 @@ otError otCoapMessageAppendBlock2Option(otMessage *aMessage, uint32_t aNum, bool
  * @retval OT_ERROR_NO_BUFS       The option length exceeds the buffer size.
  *
  */
-otError otCoapMessageAppendBlock1Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSize aSize);
+otError otCoapMessageAppendBlock1Option(otMessage *aMessage, uint32_t aNum, bool aMore, otCoapBlockSzx aSize);
 
 /**
  * This function appends a Proxy-Uri option.
@@ -796,6 +796,68 @@ otError otCoapSendRequestWithParameters(otInstance *              aInstance,
                                         void *                    aContext,
                                         const otCoapTxParameters *aTxParameters);
 
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+/**
+ * This function sends a CoAP request block-wise with custom transmission parameters.
+ *
+ * If a response for a request is expected, respective function and context information should be provided.
+ * If the response is expected to be block-wise, a respective hook function should be provided.
+ * If no response is expected, these arguments should be NULL pointers.
+ *
+ * @param[in]  aInstance        A pointer to an OpenThread instance.
+ * @param[in]  aMessage         A pointer to the message to send.
+ * @param[in]  aMessageInfo     A pointer to the message info associated with @p aMessage.
+ * @param[in]  aHandler         A function pointer that shall be called on response reception or timeout.
+ * @param[in]  aContext         A pointer to arbitrary context information. May be NULL if not used.
+ * @param[in]  aTxParameters    A pointer to transmission parameters for this request. Use NULL for defaults.
+ * @param[in]  aTransmitHook    A pointer to a hook function for outgoing block-wise transfer.
+ * @param[in]  aReceiveHook     A pointer to a hook function for incoming block-wise transfer.
+ *
+ * @retval OT_ERROR_NONE    Successfully sent CoAP message.
+ * @retval OT_ERROR_NO_BUFS Failed to allocate retransmission data.
+ *
+ */
+otError otCoapSendRequestBlockWiseWithParameters(otInstance *                aInstance,
+                                                 otMessage *                 aMessage,
+                                                 const otMessageInfo *       aMessageInfo,
+                                                 otCoapResponseHandler       aHandler,
+                                                 void *                      aContext,
+                                                 const otCoapTxParameters *  aTxParameters,
+                                                 otCoapBlockwiseTransmitHook aTransmitHook,
+                                                 otCoapBlockwiseReceiveHook  aReceiveHook);
+
+/**
+ * This function sends a CoAP request block-wise.
+ *
+ * If a response for a request is expected, respective function and context information should be provided.
+ * If the response is expected to be block-wise, a respective hook function should be provided.
+ * If no response is expected, these arguments should be NULL pointers.
+ *
+ * @param[in]  aInstance     A pointer to an OpenThread instance.
+ * @param[in]  aMessage      A pointer to the message to send.
+ * @param[in]  aMessageInfo  A pointer to the message info associated with @p aMessage.
+ * @param[in]  aHandler      A function pointer that shall be called on response reception or timeout.
+ * @param[in]  aContext      A pointer to arbitrary context information. May be NULL if not used.
+ * @param[in]  aTransmitHook A pointer to a hook function for outgoing block-wise transfer.
+ * @param[in]  aReceiveHook  A pointer to a hook function for incoming block-wise transfer.
+ *
+ * @retval OT_ERROR_NONE    Successfully sent CoAP message.
+ * @retval OT_ERROR_NO_BUFS Failed to allocate retransmission data.
+ *
+ */
+static inline otError otCoapSendRequestBlockWise(otInstance *                aInstance,
+                                                 otMessage *                 aMessage,
+                                                 const otMessageInfo *       aMessageInfo,
+                                                 otCoapResponseHandler       aHandler,
+                                                 void *                      aContext,
+                                                 otCoapBlockwiseTransmitHook aTransmitHook,
+                                                 otCoapBlockwiseReceiveHook  aReceiveHook)
+{
+    return otCoapSendRequestBlockWiseWithParameters(aInstance, aMessage, aMessageInfo, aHandler, aContext, NULL,
+                                                    aTransmitHook, aReceiveHook);
+}
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
 /**
  * This function sends a CoAP request.
  *
@@ -807,8 +869,6 @@ otError otCoapSendRequestWithParameters(otInstance *              aInstance,
  * @param[in]  aMessageInfo  A pointer to the message info associated with @p aMessage.
  * @param[in]  aHandler      A function pointer that shall be called on response reception or timeout.
  * @param[in]  aContext      A pointer to arbitrary context information. May be NULL if not used.
- * @param[in]  aTransmitHook A function pointer that is called on Block1 response reception.
- * @param[in]  aReceiveHook  A function pointer that is called on Block2 response reception.
  *
  * @retval OT_ERROR_NONE    Successfully sent CoAP message.
  * @retval OT_ERROR_NO_BUFS Failed to allocate retransmission data.
@@ -882,7 +942,7 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aBlockSize The maximal allowed block size.
  */
-void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSzx aBlockSize);
+void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapBlockSzx aBlockSize);
 
 /**
  * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
@@ -891,7 +951,7 @@ void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSzx aBlockSiz
  *
  * @retval The current set maximum block size.
  */
-otCoapOptionBlockSzx otCoapGetMaxBlockSize(otInstance *aInstance);
+otCoapBlockSzx otCoapGetMaxBlockSize(otInstance *aInstance);
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 /**
@@ -910,6 +970,47 @@ otError otCoapSendResponseWithParameters(otInstance *              aInstance,
                                          otMessage *               aMessage,
                                          const otMessageInfo *     aMessageInfo,
                                          const otCoapTxParameters *aTxParameters);
+
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+/**
+ * This function sends a CoAP response block-wise from the server with custom transmission parameters.
+ *
+ * @param[in]  aInstance        A pointer to an OpenThread instance.
+ * @param[in]  aMessage         A pointer to the CoAP response to send.
+ * @param[in]  aMessageInfo     A pointer to the message info associated with @p aMessage.
+ * @param[in]  aTxParameters    A pointer to transmission parameters for this response. Use NULL for defaults.
+ * @param[in]  aTransmitHook    A pointer to a hook function for outgoing block-wise transfer.
+ *
+ * @retval OT_ERROR_NONE     Successfully enqueued the CoAP response message.
+ * @retval OT_ERROR_NO_BUFS  Insufficient buffers available to send the CoAP response.
+ *
+ */
+otError otCoapSendResponseBlockWiseWithParameters(otInstance *                aInstance,
+                                                  otMessage *                 aMessage,
+                                                  const otMessageInfo *       aMessageInfo,
+                                                  const otCoapTxParameters *  aTxParameters,
+                                                  otCoapBlockwiseTransmitHook aTransmitHook);
+
+/**
+ * This function sends a CoAP response block-wise from the server.
+ *
+ * @param[in]  aInstance     A pointer to an OpenThread instance.
+ * @param[in]  aMessage      A pointer to the CoAP response to send.
+ * @param[in]  aMessageInfo  A pointer to the message info associated with @p aMessage.
+ * @param[in]  aTransmitHook A pointer to a hook function for outgoing block-wise transfer.
+ *
+ * @retval OT_ERROR_NONE     Successfully enqueued the CoAP response message.
+ * @retval OT_ERROR_NO_BUFS  Insufficient buffers available to send the CoAP response.
+ *
+ */
+static inline otError otCoapSendResponseBlockWise(otInstance *                aInstance,
+                                                  otMessage *                 aMessage,
+                                                  const otMessageInfo *       aMessageInfo,
+                                                  otCoapBlockwiseTransmitHook aTransmitHook)
+{
+    return otCoapSendResponseBlockWiseWithParameters(aInstance, aMessage, aMessageInfo, NULL, aTransmitHook);
+}
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 /**
  * This function sends a CoAP response from the server.

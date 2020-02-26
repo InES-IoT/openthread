@@ -195,18 +195,52 @@ otError otCoapOptionIteratorGetOptionValue(otCoapOptionIterator *aIterator, void
     return static_cast<Coap::OptionIterator *>(aIterator)->GetOptionValue(aValue);
 }
 
-otError otCoapSendRequest(otInstance *          aInstance,
-                          otMessage *           aMessage,
-                          const otMessageInfo * aMessageInfo,
-                          otCoapResponseHandler aHandler,
-                          void *                aContext)
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+otError otCoapSendRequestBlockWiseWithParameters(otInstance *                aInstance,
+                                                 otMessage *                 aMessage,
+                                                 const otMessageInfo *       aMessageInfo,
+                                                 otCoapResponseHandler       aHandler,
+                                                 void *                      aContext,
+                                                 const otCoapTxParameters *  aTxParameters,
+                                                 otCoapBlockwiseTransmitHook aTransmitHook,
+                                                 otCoapBlockwiseReceiveHook  aReceiveHook)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.GetApplicationCoap().SendMessage(
+        *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+        Coap::CoapTxParameters::From(aTxParameters), aHandler, aContext, aTransmitHook, aReceiveHook);
+}
+
+otError otCoapSendRequestWithParameters(otInstance *              aInstance,
+                                        otMessage *               aMessage,
+                                        const otMessageInfo *     aMessageInfo,
+                                        otCoapResponseHandler     aHandler,
+                                        void *                    aContext,
+                                        const otCoapTxParameters *aTxParameters)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.GetApplicationCoap().SendMessage(
+        *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+        Coap::CoapTxParameters::From(aTxParameters), aHandler, aContext, NULL, NULL);
+}
+#else  // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
+otError otCoapSendRequestWithParameters(otInstance *              aInstance,
+                                        otMessage *               aMessage,
+                                        const otMessageInfo *     aMessageInfo,
+                                        otCoapResponseHandler     aHandler,
+                                        void *                    aContext,
+                                        const otCoapTxParameters *aTxParameters)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
     return instance.GetApplicationCoap().SendMessage(*static_cast<Coap::Message *>(aMessage),
-                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo), aHandler,
-                                                     aContext);
+                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+                                                     Coap::CoapTxParameters::From(aTxParameters), aHandler, aContext);
 }
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 otError otCoapStart(otInstance *aInstance, uint16_t aPort)
 {
@@ -244,14 +278,14 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
 }
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapOptionBlockSize aBlockSize)
+void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapBlockSzx aBlockSize)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
     instance.GetApplicationCoap().SetMaxBlockSize(aBlockSize);
 }
 
-otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance)
+otCoapBlockSzx otCoapGetMaxBlockSize(otInstance *aInstance)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
@@ -259,12 +293,44 @@ otCoapOptionBlockSize otCoapGetMaxBlockSize(otInstance *aInstance)
 }
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
-otError otCoapSendResponse(otInstance *aInstance, otMessage *aMessage, const otMessageInfo *aMessageInfo)
+#if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+otError otCoapSendResponseBlockWiseWithParameters(otInstance *                aInstance,
+                                                  otMessage *                 aMessage,
+                                                  const otMessageInfo *       aMessageInfo,
+                                                  const otCoapTxParameters *  aTxParameters,
+                                                  otCoapBlockwiseTransmitHook aTransmitHook)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.GetApplicationCoap().SendMessage(
+        *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+        Coap::CoapTxParameters::From(aTxParameters), NULL, NULL, aTransmitHook, NULL);
+}
+
+otError otCoapSendResponseWithParameters(otInstance *              aInstance,
+                                         otMessage *               aMessage,
+                                         const otMessageInfo *     aMessageInfo,
+                                         const otCoapTxParameters *aTxParameters)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+
+    return instance.GetApplicationCoap().SendMessage(
+        *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+        Coap::CoapTxParameters::From(aTxParameters), NULL, NULL, NULL, NULL);
+}
+#else  // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
+
+otError otCoapSendResponseWithParameters(otInstance *              aInstance,
+                                         otMessage *               aMessage,
+                                         const otMessageInfo *     aMessageInfo,
+                                         const otCoapTxParameters *aTxParameters)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
 
     return instance.GetApplicationCoap().SendMessage(*static_cast<Coap::Message *>(aMessage),
-                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo));
+                                                     *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
+                                                     Coap::CoapTxParameters::From(aTxParameters), NULL, NULL);
 }
+#endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
 #endif // OPENTHREAD_CONFIG_COAP_API_ENABLE

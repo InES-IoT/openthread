@@ -365,7 +365,7 @@ public:
      * @retval OT_ERROR_NO_BUFS       The option length exceeds the buffer size.
      *
      */
-    otError AppendBlockOption(BlockType aType, uint32_t aNum, bool aMore, otCoapOptionBlockSzx aSize);
+    otError AppendBlockOption(BlockType aType, uint32_t aNum, bool aMore, otCoapBlockSzx aSize);
 
     /**
      * This method appends a Proxy-Uri option.
@@ -419,17 +419,16 @@ public:
      * @param[in]   aBlockType      Block1 or Block2 option value.
      * @param[out]  aBlockNumber    The relative number of the block within a sequence of blocks.
      * @param[out]  aMoreBlocks     More blocks are following.
-     * @param[out]  aBlockSize      One of the block lengths listed in
-     *                              otCoapOptionBlockSize above.
+     * @param[out]  aBlockSize      One of the block lengths listed in otCoapBlockSzx above.
      *
      * @retval  OT_ERROR_NONE           The option has been found and is valid.
      * @retval  OT_ERROR_NOT_FOUND      The option has not been found.
      * @retval  OT_ERROR_INVALID_ARGS   The option is invalid.
      */
-    otError ReadBlockOptionValues(otCoapOptionType      aBlockType,
-                                  uint32_t *            aBlockNumber,
-                                  bool *                aMoreBlocks,
-                                  otCoapOptionBlockSzx *aBlockSize);
+    otError ReadBlockOptionValues(otCoapOptionType aBlockType,
+                                  uint32_t *       aBlockNumber,
+                                  bool *           aMoreBlocks,
+                                  otCoapBlockSzx * aBlockSize);
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     /**
@@ -475,7 +474,7 @@ public:
      * @returns The block size.
      *
      */
-    otCoapOptionBlockSzx GetBlockWiseBlockSize(void) { return GetHelpData().mBlockWiseData.mBlockSize; }
+    otCoapBlockSzx GetBlockWiseBlockSize(void) { return GetHelpData().mBlockWiseData.mBlockSize; }
 #endif
 
     /**
@@ -549,10 +548,7 @@ public:
      * @param[in]   aBlockSize    Block size value to set.
      *
      */
-    void SetBlockWiseBlockSize(otCoapOptionBlockSzx aBlockSize)
-    {
-        GetHelpData().mBlockWiseData.mBlockSize = aBlockSize;
-    }
+    void SetBlockWiseBlockSize(otCoapBlockSzx aBlockSize) { GetHelpData().mBlockWiseData.mBlockSize = aBlockSize; }
 #endif
 
     /**
@@ -698,9 +694,9 @@ private:
     OT_TOOL_PACKED_BEGIN
     struct BlockWiseData
     {
-        uint32_t             mBlockNumber;
-        bool                 mMoreBlocks;
-        otCoapOptionBlockSzx mBlockSize;
+        uint32_t       mBlockNumber;
+        bool           mMoreBlocks;
+        otCoapBlockSzx mBlockSize;
     } OT_TOOL_PACKED_END;
 #endif
 

@@ -193,13 +193,13 @@ exit:
     return error;
 }
 
-otError Message::AppendBlockOption(Message::BlockType aType, uint32_t aNum, bool aMore, otCoapBlockSize aSize)
+otError Message::AppendBlockOption(Message::BlockType aType, uint32_t aNum, bool aMore, otCoapBlockSzx aSize)
 {
     otError  error   = OT_ERROR_NONE;
     uint32_t encoded = aSize;
 
     VerifyOrExit(aType == kBlockType1 || aType == kBlockType2, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(aSize <= OT_COAP_BLOCK_SIZE_1024, error = OT_ERROR_INVALID_ARGS);
+    VerifyOrExit(aSize <= OT_COAP_OPTION_BLOCK_SZX_1024, error = OT_ERROR_INVALID_ARGS);
     VerifyOrExit(aNum < kBlockNumMax, error = OT_ERROR_INVALID_ARGS);
 
     encoded |= static_cast<uint32_t>(aMore << kBlockMOffset);
@@ -214,21 +214,6 @@ exit:
 otError Message::AppendProxyUriOption(const char *aProxyUri)
 {
     return AppendStringOption(OT_COAP_OPTION_PROXY_URI, aProxyUri);
-}
-
-otError Message::AppendBlockOption(otCoapOptionType     aBlockType,
-                                   uint32_t             aBlockNumber,
-                                   bool                 aMoreBlocks,
-                                   otCoapOptionBlockSzx aBlockSize)
-{
-    otError  error       = OT_ERROR_NONE;
-    uint32_t optionValue = 0;
-
-    optionValue = (aBlockNumber << 4) + (uint32_t)(aMoreBlocks << 3) + aBlockSize;
-
-    error = AppendUintOption(aBlockType, optionValue);
-
-    return error;
 }
 
 otError Message::AppendContentFormatOption(otCoapOptionContentFormat aContentFormat)
@@ -269,17 +254,17 @@ otError Message::ReadBlockOptionValues(otCoapOptionType aBlockType)
     case 1:
         SetBlockWiseBlockNumber((buf[0] & 0xf0) >> 4);
         SetMoreBlocksFlag(static_cast<bool>((buf[0] & 0x08) >> 3 == 1));
-        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSzx>(buf[0] & 0x07));
+        SetBlockWiseBlockSize(static_cast<otCoapBlockSzx>(buf[0] & 0x07));
         break;
     case 2:
         SetBlockWiseBlockNumber((buf[0] << 4) + ((buf[1] & 0xf0) >> 4));
         SetMoreBlocksFlag(static_cast<bool>((buf[1] & 0x08) >> 3 == 1));
-        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSzx>(buf[1] & 0x07));
+        SetBlockWiseBlockSize(static_cast<otCoapBlockSzx>(buf[1] & 0x07));
         break;
     case 3:
         SetBlockWiseBlockNumber((buf[0] << 12) + (buf[1] << 4) + ((buf[2] & 0xf0) >> 4));
         SetMoreBlocksFlag(static_cast<bool>((buf[2] & 0x08) >> 3 == 1));
-        SetBlockWiseBlockSize(static_cast<otCoapOptionBlockSzx>(buf[2] & 0x07));
+        SetBlockWiseBlockSize(static_cast<otCoapBlockSzx>(buf[2] & 0x07));
         break;
     default:
         error = OT_ERROR_INVALID_ARGS;
@@ -291,10 +276,10 @@ exit:
 }
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 
-otError Message::ReadBlockOptionValues(otCoapOptionType      aBlockType,
-                                       uint32_t *            aBlockNumber,
-                                       bool *                aMoreBlocks,
-                                       otCoapOptionBlockSzx *aBlockSize)
+otError Message::ReadBlockOptionValues(otCoapOptionType aBlockType,
+                                       uint32_t *       aBlockNumber,
+                                       bool *           aMoreBlocks,
+                                       otCoapBlockSzx * aBlockSize)
 {
     otError             error                     = OT_ERROR_NONE;
     uint8_t             buf[kMaxOptionHeaderSize] = {0};
@@ -316,17 +301,17 @@ otError Message::ReadBlockOptionValues(otCoapOptionType      aBlockType,
     case 1:
         *aBlockNumber = (buf[0] & 0xf0) >> 4;
         *aMoreBlocks  = static_cast<bool>((buf[0] & 0x08) >> 3 == 1);
-        *aBlockSize   = static_cast<otCoapOptionBlockSzx>(buf[0] & 0x07);
+        *aBlockSize   = static_cast<otCoapBlockSzx>(buf[0] & 0x07);
         break;
     case 2:
         *aBlockNumber = ((uint32_t)buf[0] << 4) + (((uint32_t)buf[1] & 0xf0) >> 4);
         *aMoreBlocks  = static_cast<bool>((buf[1] & 0x08) >> 3 == 1);
-        *aBlockSize   = static_cast<otCoapOptionBlockSzx>(buf[1] & 0x07);
+        *aBlockSize   = static_cast<otCoapBlockSzx>(buf[1] & 0x07);
         break;
     case 3:
         *aBlockNumber = ((uint32_t)buf[0] << 12) + ((uint32_t)buf[1] << 4) + (((uint32_t)buf[2] & 0xf0) >> 4);
         *aMoreBlocks  = static_cast<bool>((buf[2] & 0x08) >> 3 == 1);
-        *aBlockSize   = static_cast<otCoapOptionBlockSzx>(buf[2] & 0x07);
+        *aBlockSize   = static_cast<otCoapBlockSzx>(buf[2] & 0x07);
         break;
     default:
         error = OT_ERROR_INVALID_ARGS;
