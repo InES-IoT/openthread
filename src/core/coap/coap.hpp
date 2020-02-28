@@ -842,13 +842,13 @@ private:
     void    CleanupBlockWiseTransfer(void);
     otError CacheLastBlockResponse(Message *aResponse);
 
-    otError ProcessBlock1Request(Message &                  aMessage,
-                                 const Ip6::MessageInfo &   aMessageInfo,
-                                 otCoapBlockwiseReceiveHook aReceiveHook,
-                                 uint32_t                   aTotalLength);
-    otError ProcessBlock2Request(Message &                   aMessage,
-                                 const Ip6::MessageInfo &    aMessageInfo,
-                                 otCoapBlockwiseTransmitHook aTransmitHook);
+    otError ProcessBlock1Request(Message &               aMessage,
+                                 const Ip6::MessageInfo &aMessageInfo,
+                                 const Resource &        aResource,
+                                 uint32_t                aTotalLength);
+    otError ProcessBlock2Request(Message &               aMessage,
+                                 const Ip6::MessageInfo &aMessageInfo,
+                                 const Resource &        aResource);
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     void ProcessReceivedRequest(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
     void ProcessReceivedResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);

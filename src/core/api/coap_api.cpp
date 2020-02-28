@@ -195,6 +195,11 @@ otError otCoapOptionIteratorGetOptionValue(otCoapOptionIterator *aIterator, void
     return static_cast<Coap::OptionIterator *>(aIterator)->GetOptionValue(aValue);
 }
 
+const otCoapOption *otCoapOptionIteratorGetOptionByNumber(otCoapOptionIterator *aIterator, uint16_t aNumber)
+{
+    return static_cast<Coap::OptionIterator *>(aIterator)->GetOptionByNumber(aNumber);
+}
+
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 otError otCoapSendRequestBlockWiseWithParameters(otInstance *                aInstance,
                                                  otMessage *                 aMessage,

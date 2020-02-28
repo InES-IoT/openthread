@@ -123,15 +123,30 @@ private:
     char           mUriPath[kMaxUriLength];
 
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
-    otError BlockwiseReceiveHook(const uint8_t *aBlock,
-                                 uint32_t       aPosition,
-                                 uint16_t       aBlockLength,
-                                 bool           aMore,
-                                 uint32_t       aTotalLength);
-    otError BlockwiseTransmitHook(uint8_t * aBlock,
-                                  uint32_t  aPosition,
-                                  uint16_t *aBlockLength,
-                                  bool *    aMore);
+    static void HandleRequestBlockWise(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
+    void        HandleRequestBlockWise(otMessage *aMessage, const otMessageInfo *aMessageInfo);
+
+    static otError BlockwiseReceiveHook(void *         aContext,
+                                        const uint8_t *aBlock,
+                                        uint32_t       aPosition,
+                                        uint16_t       aBlockLength,
+                                        bool           aMore,
+                                        uint32_t       aTotalLength);
+    otError        BlockwiseReceiveHook(const uint8_t *aBlock,
+                                        uint32_t       aPosition,
+                                        uint16_t       aBlockLength,
+                                        bool           aMore,
+                                        uint32_t       aTotalLength);
+
+    static otError BlockwiseTransmitHook(void *    aContext,
+                                         uint8_t * aBlock,
+                                         uint32_t  aPosition,
+                                         uint16_t *aBlockLength,
+                                         bool *    aMore);
+    otError        BlockwiseTransmitHook(uint8_t * aBlock,
+                                         uint32_t  aPosition,
+                                         uint16_t *aBlockLength,
+                                         bool *    aMore);
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
 };
 

@@ -354,6 +354,7 @@ typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const 
 /**
  * This function pointer is called when a CoAP message with an block-wise transfer option is received.
  *
+ * @param[in]  aContext     A pointer to application-specific context.
  * @param[in]  aBlock       A pointer to the block segment.
  * @param[in]  aPosition    The position of @p aBlock in a sequence in bytes.
  * @param[in]  aBlockLength The length of the block segment.
@@ -366,7 +367,8 @@ typedef void (*otCoapRequestHandler)(void *aContext, otMessage *aMessage, const 
  * @retval  OT_ERROR_NO_FRAME_RECEIVED  Block segment missing.
  *
  */
-typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
+typedef otError (*otCoapBlockwiseReceiveHook)(void *         aContext,
+                                              const uint8_t *aBlock,
                                               uint32_t       aPosition,
                                               uint16_t       aBlockLength,
                                               bool           aMore,
@@ -375,6 +377,7 @@ typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
 /**
  * This function pointer is called before the next block in a block-wise transfer is sent.
  *
+ * @param[in]       aContext     A pointer to application-specific context.
  * @param[inout]    aBlock       A pointer to where the block segment can be written to.
  * @param[in]       aPosition    The position in a sequence from which to obtain the block segment.
  * @param[inout]    aBlockLength On entry, the maximum block segment length.
@@ -384,7 +387,8 @@ typedef otError (*otCoapBlockwiseReceiveHook)(const uint8_t *aBlock,
  * @retval  OT_ERROR_INVALID_ARGS   Block at @p aPosition does not exist.
  *
  */
-typedef otError (*otCoapBlockwiseTransmitHook)(uint8_t * aBlock,
+typedef otError (*otCoapBlockwiseTransmitHook)(void *    aContext,
+                                               uint8_t * aBlock,
                                                uint32_t  aPosition,
                                                uint16_t *aBlockLength,
                                                bool *    aMore);
@@ -757,6 +761,9 @@ const otCoapOption *otCoapOptionIteratorGetNextOption(otCoapOptionIterator *aIte
  *
  */
 otError otCoapOptionIteratorGetOptionValue(otCoapOptionIterator *aIterator, void *aValue);
+
+// TODO
+const otCoapOption *otCoapOptionIteratorGetOptionByNumber(otCoapOptionIterator *aIterator, uint16_t aNumber);
 
 /**
  * This function creates a new CoAP message.
