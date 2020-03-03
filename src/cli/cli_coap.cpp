@@ -658,15 +658,18 @@ void Coap::HandleRequestBlockWise(otMessage *aMessage, const otMessageInfo *aMes
         {
             // TODO: make block size configurable
             SuccessOrExit(error = otCoapMessageAppendBlock2Option(responseMessage, 0, true, OT_COAP_OPTION_BLOCK_SZX_1024));
+        }
 
-            if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_POST)
-            {
-                SuccessOrExit(error = otCoapOptionIteratorInit(&iterator, aMessage));
-                oldBlockOption = otCoapOptionIteratorGetOptionByNumber(&iterator, OT_COAP_OPTION_BLOCK1);
-                SuccessOrExit(error = otCoapOptionIteratorGetOptionValue(&iterator, oldBlockValue));
-                SuccessOrExit(error = otCoapMessageAppendOption(responseMessage, oldBlockOption->mNumber, oldBlockOption->mLength, oldBlockValue));
-            }
+        if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_POST || otCoapMessageGetCode(aMessage) == OT_COAP_CODE_PUT)
+        {
+            SuccessOrExit(error = otCoapOptionIteratorInit(&iterator, aMessage));
+            oldBlockOption = otCoapOptionIteratorGetOptionByNumber(&iterator, OT_COAP_OPTION_BLOCK1);
+            SuccessOrExit(error = otCoapOptionIteratorGetOptionValue(&iterator, oldBlockValue));
+            SuccessOrExit(error = otCoapMessageAppendOption(responseMessage, oldBlockOption->mNumber, oldBlockOption->mLength, oldBlockValue));
+        }
 
+        if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_GET || otCoapMessageGetCode(aMessage) == OT_COAP_CODE_POST)
+        {
             SuccessOrExit(error = otCoapMessageSetPayloadMarker(responseMessage));
         }
 

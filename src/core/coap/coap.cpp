@@ -164,6 +164,8 @@ otError CoapBase::SendMessage(Message &                   aMessage,
                     SuccessOrExit(
                         error = aTransmitHook(aContext, buf, aMessage.GetBlockWiseBlockNumber() * bufLen, &bufLen, &moreBlocks));
                     SuccessOrExit(error = aMessage.Append(buf, bufLen));
+
+                    CacheLastBlockResponse(&aMessage);
                 }
             }
         }
@@ -548,13 +550,15 @@ otError CoapBase::SendNextBlock1Request(Message &               aRequest,
     uint16_t       bufLen                                       = OPENTHREAD_CONFIG_COAP_MAX_BLOCK_LENGTH;
     OptionIterator iterator;
 
-    SuccessOrExit(error = iterator.Init(&aRequest));
-
-    // Init request for next block
-    VerifyOrExit((request = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
-    request->Init(OT_COAP_TYPE_CONFIRMABLE, aRequest.GetCode());
-
+    SuccessOrExit(error = aRequest.ReadBlockOptionValues(OT_COAP_OPTION_BLOCK1));
     SuccessOrExit(error = aMessage.ReadBlockOptionValues(OT_COAP_OPTION_BLOCK1));
+
+    // Conclude block-wise transfer if last block has been received
+    if (!aRequest.IsMoreBlocksFlagSet())
+    {
+        FinalizeCoapTransaction(aRequest, aCoapMetadata, &aMessage, &aMessageInfo, OT_ERROR_NONE);
+        ExitNow();
+    }
 
     // Get next block
     SuccessOrExit(error = aCoapMetadata.mBlockwiseTransmitHook(aCoapMetadata.mResponseContext,
@@ -563,6 +567,12 @@ otError CoapBase::SendNextBlock1Request(Message &               aRequest,
 
     // Check if block length is valid
     VerifyOrExit(bufLen <= 1 << (4 + aMessage.GetBlockWiseBlockSize()), error = OT_ERROR_INVALID_ARGS);
+
+    SuccessOrExit(error = iterator.Init(&aRequest));
+
+    // Init request for next block
+    VerifyOrExit((request = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
+    request->Init(OT_COAP_TYPE_CONFIRMABLE, aRequest.GetCode());
 
     // Copy options from last response to next message
     for (const otCoapOption *option = iterator.GetFirstOption(); option != NULL; option = iterator.GetNextOption())
@@ -644,12 +654,6 @@ otError CoapBase::SendNextBlock2Request(Message &               aRequest,
     OptionIterator iterator;
     bool           isOptionSet = false;
 
-    SuccessOrExit(error = iterator.Init(&aRequest));
-
-    // Init request for next block
-    VerifyOrExit((request = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
-    request->Init(OT_COAP_TYPE_CONFIRMABLE, aRequest.GetCode());
-
     SuccessOrExit(error = aMessage.ReadBlockOptionValues(OT_COAP_OPTION_BLOCK2));
 
     // Check payload and block length
@@ -667,8 +671,21 @@ otError CoapBase::SendNextBlock2Request(Message &               aRequest,
     otLogInfoCoap("Received Block2 Nr. %d , Size: %d bytes, More Blocks Flag: %d", aMessage.GetBlockWiseBlockNumber(),
                   1 << (4 + aMessage.GetBlockWiseBlockSize()), aMessage.IsMoreBlocksFlagSet());
 
+    // Conclude block-wise transfer if last block has been received
+    if (!aMessage.IsMoreBlocksFlagSet())
+    {
+        FinalizeCoapTransaction(aRequest, aCoapMetadata, &aMessage, &aMessageInfo, OT_ERROR_NONE);
+        ExitNow();
+    }
+
+    // Init request for next block
+    VerifyOrExit((request = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
+    request->Init(OT_COAP_TYPE_CONFIRMABLE, aRequest.GetCode());
+
+    SuccessOrExit(error = iterator.Init(&aRequest));
+
     // Copy options from last resquest to next message
-    for (const otCoapOption *option = iterator.GetFirstOption(); option != NULL; option = iterator.GetNextOption())
+    for (const otCoapOption *option = iterator.GetFirstOption(); option != NULL && option->mLength != 0; option = iterator.GetNextOption())
     {
         VerifyOrExit((optionBuf = (uint8_t *)calloc(option->mLength, sizeof(uint8_t))) != NULL,
                      error = OT_ERROR_NO_BUFS);
@@ -686,8 +703,8 @@ otError CoapBase::SendNextBlock2Request(Message &               aRequest,
 
             isOptionSet = true;
 
-            // If option to copy next is Block2 option, option is not copied
-            if (option->mNumber == OT_COAP_OPTION_BLOCK2)
+            // If option to copy next is Block1 or Block2 option, option is not copied
+            if (option->mNumber == OT_COAP_OPTION_BLOCK1 || option->mNumber == OT_COAP_OPTION_BLOCK2)
             {
                 continue;
             }
@@ -719,12 +736,14 @@ otError CoapBase::SendNextBlock2Request(Message &               aRequest,
 
     request->SetMessageId(mMessageId++);
 
-    SuccessOrExit(error = SendMessage(*request, aMessageInfo, CoapTxParameters::GetDefault(),
-                                      aCoapMetadata.mResponseHandler, aCoapMetadata.mResponseContext, NULL,
-                                      aCoapMetadata.mBlockwiseReceiveHook));
+    DequeueMessage(aRequest);
 
     otLogInfoCoap("Request Block2 Nr. %d, Size: %d bytes", request->GetBlockWiseBlockNumber(),
                   1 << (4 + request->GetBlockWiseBlockSize()));
+
+    SuccessOrExit(error = SendMessage(*request, aMessageInfo, CoapTxParameters::GetDefault(),
+                                      aCoapMetadata.mResponseHandler, aCoapMetadata.mResponseContext, NULL,
+                                      aCoapMetadata.mBlockwiseReceiveHook));
 
 exit:
     if (error != OT_ERROR_NONE && request != NULL)
@@ -734,105 +753,6 @@ exit:
 
     return error;
 }
-/*
-void CoapBase::FinalizeCoapBlockWiseTransaction(Message *               aLastBlock,
-                                                const Ip6::MessageInfo *aMessageInfo,
-                                                Message *               aRequest,
-                                                const CoapMetadata *    aCoapMetadata,
-                                                const char *            aUri)
-{
-    otError        error     = OT_ERROR_NONE;
-    Message *      message   = NULL;
-    uint8_t *      optionBuf = NULL;
-    OptionIterator iterator;
-
-    SuccessOrExit(error = iterator.Init(aLastBlock));
-
-    // Reassemble message
-    otLogDebgCoap("Last block received");
-
-    VerifyOrExit((message = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
-    message->Init(aLastBlock->GetType(), aLastBlock->GetCode());
-    SuccessOrExit(error = message->SetToken(aLastBlock->GetToken(), aLastBlock->GetTokenLength()));
-    message->SetMessageId(aLastBlock->GetMessageId());
-
-    for (const otCoapOption *option = iterator.GetFirstOption(); option != NULL; option = iterator.GetNextOption())
-    {
-        VerifyOrExit((optionBuf = (uint8_t *)calloc(option->mLength, sizeof(uint8_t))) != NULL,
-                     error = OT_ERROR_NO_BUFS);
-
-        if ((option->mNumber != OT_COAP_OPTION_BLOCK1) && (option->mNumber != OT_COAP_OPTION_BLOCK2))
-        {
-            iterator.GetOptionValue(optionBuf);
-            SuccessOrExit(error = message->AppendOption(option->mNumber, option->mLength, optionBuf));
-        }
-
-        if (optionBuf != NULL)
-        {
-            free(optionBuf);
-            optionBuf = NULL;
-        }
-    }
-
-    SuccessOrExit(error = message->SetPayloadMarker());
-    SuccessOrExit(error = message->Append(mReassemblyMessage, mReassemblyMessageLength));
-
-    message->Finish();
-
-    if (aUri != NULL)
-    {
-        // Finalize Block1 transfer
-        otLogInfoCoap("Finalized Block1 transfer");
-
-        mHasLastBlockBeenReceived = true;
-
-        for (const Resource *resource = mResources.GetHead(); resource; resource = resource->GetNext())
-        {
-            if (strcmp(resource->mUriPath, aUri) == 0)
-            {
-                resource->HandleRequest(*message, *aMessageInfo);
-                error = OT_ERROR_NONE;
-                ExitNow();
-            }
-        }
-
-        if (mDefaultHandler)
-        {
-            mDefaultHandler(mDefaultHandlerContext, message, aMessageInfo);
-            error = OT_ERROR_NONE;
-        }
-    }
-
-exit:
-    if (optionBuf != NULL)
-    {
-        free(optionBuf);
-        optionBuf = NULL;
-    }
-
-    if ((aRequest != NULL) && (aCoapMetadata != NULL) && (aUri == NULL))
-    {
-        // Finalize Block2 transfer
-        otLogInfoCoap("Finalized Block2 transfer");
-
-        FinalizeCoapTransaction(*aRequest, *aCoapMetadata, message, aMessageInfo, error);
-    }
-
-    if (error != OT_ERROR_NONE)
-    {
-        otLogWarnCoap("Finalizing block-wise transfer failed!");
-    }
-    else
-    {
-        CleanupBlockWiseTransfer();
-    }
-
-    if (message != NULL)
-    {
-        message->Free();
-    }
-}
-*/
 
 otError CoapBase::ProcessBlock1Request(Message &               aMessage,
                                        const Ip6::MessageInfo &aMessageInfo,
@@ -869,6 +789,8 @@ otError CoapBase::ProcessBlock1Request(Message &               aMessage,
                                                           response->IsMoreBlocksFlagSet(),
                                                           response->GetBlockWiseBlockSize()));
 
+        SuccessOrExit(error = CacheLastBlockResponse(response));
+
         SuccessOrExit(error = SendMessage(*response, aMessageInfo));
 
         otLogInfoCoap("Acknowledge Block1 Nr. %d, Size: %d bytes", response->GetBlockWiseBlockNumber(),
@@ -878,6 +800,8 @@ otError CoapBase::ProcessBlock1Request(Message &               aMessage,
     }
     else
     {
+        // Conclude block-wise transfer if last block has been received
+        FreeLastBlockResponse();
         error = OT_ERROR_NONE;
     }
 
@@ -903,16 +827,22 @@ otError CoapBase::ProcessBlock2Request(Message &               aMessage,
     OptionIterator iterator;
 
     SuccessOrExit(error = aMessage.ReadBlockOptionValues(OT_COAP_OPTION_BLOCK2));
-    bufLen = 1 << (4 + aMessage.GetBlockWiseBlockSize());
 
     otLogInfoCoap("Request for Block2 Nr. %d, Size: %d bytes received", aMessage.GetBlockWiseBlockNumber(),
                   1 << (4 + aMessage.GetBlockWiseBlockSize()));
+
+    if (aMessage.GetBlockWiseBlockNumber() == 0)
+    {
+        aResource.HandleRequest(aMessage, aMessageInfo);
+        ExitNow();
+    }
 
     // Set up next response
     VerifyOrExit((response = NewMessage()) != NULL, error = OT_ERROR_NO_BUFS);
     response->Init(OT_COAP_TYPE_ACKNOWLEDGMENT, OT_COAP_CODE_CONTENT);
     response->SetMessageId(aMessage.GetMessageId());
 
+    bufLen = 1 << (4 + aMessage.GetBlockWiseBlockSize());
     SuccessOrExit(
         error = aResource.mTransmitHook(aResource.mContext, buf,
                                         (1 << (4 + aMessage.GetBlockWiseBlockSize())) * aMessage.GetBlockWiseBlockNumber(),
@@ -946,10 +876,6 @@ otError CoapBase::ProcessBlock2Request(Message &               aMessage,
             ExitNow();
             break;
         }
-
-        response->SetBlockWiseBlockNumber(
-            ((1 << (4 + aMessage.GetBlockWiseBlockSize())) * aMessage.GetBlockWiseBlockNumber()) /
-            (1 << (4 + response->GetBlockWiseBlockSize())));
     }
     else
     {
@@ -957,6 +883,10 @@ otError CoapBase::ProcessBlock2Request(Message &               aMessage,
         VerifyOrExit(bufLen < 1 << (4 + aMessage.GetBlockWiseBlockSize()), error = OT_ERROR_INVALID_ARGS);
         response->SetBlockWiseBlockSize(aMessage.GetBlockWiseBlockSize());
     }
+
+    response->SetBlockWiseBlockNumber(
+        ((1 << (4 + aMessage.GetBlockWiseBlockSize())) * aMessage.GetBlockWiseBlockNumber()) /
+        (1 << (4 + response->GetBlockWiseBlockSize())));
 
     // Copy options from last response
     SuccessOrExit(error = iterator.Init(mLastResponse));
@@ -966,16 +896,16 @@ otError CoapBase::ProcessBlock2Request(Message &               aMessage,
         VerifyOrExit((optionBuf = (uint8_t *)calloc(option->mLength, sizeof(uint8_t))) != NULL,
                      error = OT_ERROR_NO_BUFS);
 
-        if (option->mNumber != OT_COAP_OPTION_BLOCK2)
-        {
-            iterator.GetOptionValue(optionBuf);
-            SuccessOrExit(error = response->AppendOption(option->mNumber, option->mLength, optionBuf));
-        }
-        else
+        if (option->mNumber == OT_COAP_OPTION_BLOCK2)
         {
             SuccessOrExit(error = response->AppendBlockOption(Message::kBlockType2, response->GetBlockWiseBlockNumber(),
                                                               response->IsMoreBlocksFlagSet(),
                                                               response->GetBlockWiseBlockSize()));
+        }
+        else if (option->mNumber != OT_COAP_OPTION_BLOCK1)
+        {
+            iterator.GetOptionValue(optionBuf);
+            SuccessOrExit(error = response->AppendOption(option->mNumber, option->mLength, optionBuf));
         }
 
         if (optionBuf != NULL)
@@ -988,7 +918,15 @@ otError CoapBase::ProcessBlock2Request(Message &               aMessage,
     SuccessOrExit(error = response->SetPayloadMarker());
     SuccessOrExit(error = response->Append(buf, bufLen));
 
-    SuccessOrExit(error = CacheLastBlockResponse(response));
+    if (response->IsMoreBlocksFlagSet())
+    {
+        SuccessOrExit(error = CacheLastBlockResponse(response));
+    }
+    else
+    {
+        // Conclude block-wise transfer if last block has been received
+        FreeLastBlockResponse();
+    }
 
     SuccessOrExit(error = SendMessage(*response, aMessageInfo));
 
