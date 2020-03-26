@@ -862,7 +862,8 @@ private:
                                   Message &               aMessage,
                                   const Ip6::MessageInfo &aMessageInfo,
                                   const CoapMetadata &    aCoapMetadata,
-                                  uint32_t                aTotalLength);
+                                  uint32_t                aTotalLength,
+                                  bool                    aBeginBlock1Transfer);
 #endif // OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
     otError SendCopy(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
     otError SendEmptyMessage(Message::Type aType, const Message &aRequest, const Ip6::MessageInfo &aMessageInfo);

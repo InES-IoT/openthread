@@ -380,7 +380,7 @@ otError Coap::ProcessRequest(int argc, char *argv[])
 #if OPENTHREAD_CONFIG_COAP_BLOCKWISE_TRANSFER_ENABLE
         if (strcmp(argv[4], "test-payload") == 0)
         {
-            SuccessOrExit(error = otCoapMessageAppendBlock1Option(message, 0, true, OT_COAP_OPTION_BLOCK_SZX_1024));
+            SuccessOrExit(error = otCoapMessageAppendBlock1Option(message, 0, true, otCoapGetMaxBlockSize(mInterpreter.mInstance)));
         }
         else
         {
@@ -657,7 +657,7 @@ void Coap::HandleRequestBlockWise(otMessage *aMessage, const otMessageInfo *aMes
         if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_GET || otCoapMessageGetCode(aMessage) == OT_COAP_CODE_POST)
         {
             // TODO: make block size configurable
-            SuccessOrExit(error = otCoapMessageAppendBlock2Option(responseMessage, 0, true, OT_COAP_OPTION_BLOCK_SZX_1024));
+            SuccessOrExit(error = otCoapMessageAppendBlock2Option(responseMessage, 0, true, otCoapGetMaxBlockSize(mInterpreter.mInstance)));
         }
 
         if (otCoapMessageGetCode(aMessage) == OT_COAP_CODE_POST || otCoapMessageGetCode(aMessage) == OT_COAP_CODE_PUT)

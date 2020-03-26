@@ -125,62 +125,20 @@ CoapSecure::CoapSecure(Interpreter &aInterpreter)
     memset(&mPskId, 0, sizeof(mPskId));
 }
 
-void CoapSecure::PrintPayload(otMessage *aMessage) const
+void Coap::PrintPayload(otMessage *aMessage) const
 {
     uint8_t  buf[kMaxBufferSize];
     uint16_t bytesToPrint;
-    uint16_t bytesPrinted = 0;
-    uint16_t length       = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
-    // scnm test begin
-    bool payloadCorrect = true;
-    // scnm test end
-    /*if (length > 0)
-    {
-        mInterpreter.mServer->OutputFormat(" with payload: ");
-
-        while (length > 0)
-        {
-            bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
-            otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
-
-            mInterpreter.OutputBytes(buf, static_cast<uint8_t>(bytesToPrint));
-
-            length -= bytesToPrint;
-            bytesPrinted += bytesToPrint;
-
-            // scnm test begin
-            if (bytesPrinted % (4 * kMaxBufferSize) == 0)
-            {
-                mInterpreter.mServer->OutputFormat("\r\n");
-            }
-            // scnm test end
-        }
-    }*/
+    uint16_t bytesPrinted   = 0;
+    uint16_t length         = otMessageGetLength(aMessage) - otMessageGetOffset(aMessage);
 
     if (length > 0)
     {
         mInterpreter.mServer->OutputFormat(" with payload: ");
 
-        // scnm test begin
-        if ((otMessageGetLength(aMessage) - otMessageGetOffset(aMessage)) >
-            (1 << (4 + otCoapGetMaxBlockSize(mInterpreter.mInstance))))
+        if (FinalBlockReceived)
         {
-            while (length > 0)
-            {
-                bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
-                otMessageRead(aMessage, otMessageGetOffset(aMessage) + bytesPrinted, buf, bytesToPrint);
-
-                if (memcmp(buf, TEST_BLOCK_WISE_PAYLOAD + bytesPrinted, bytesToPrint) != 0)
-                {
-                    payloadCorrect = false;
-                    break;
-                }
-
-                length -= bytesToPrint;
-                bytesPrinted += bytesToPrint;
-            }
-
-            if (payloadCorrect)
+            if (memcmp(TEST_BLOCK_WISE_PAYLOAD, ReceiveBuffer, sizeof(TEST_BLOCK_WISE_PAYLOAD)))
             {
                 mInterpreter.mServer->OutputFormat("test-payload correct");
             }
@@ -188,10 +146,11 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
             {
                 mInterpreter.mServer->OutputFormat("test-payload incorrect");
             }
+
+            FinalBlockReceived = false;
         }
         else
         {
-        // scnm test end
             while (length > 0)
             {
                 bytesToPrint = (length < sizeof(buf)) ? length : sizeof(buf);
@@ -202,12 +161,10 @@ void CoapSecure::PrintPayload(otMessage *aMessage) const
                 length -= bytesToPrint;
                 bytesPrinted += bytesToPrint;
 
-                // scnm test begin
                 if (bytesPrinted % (4 * kMaxBufferSize) == 0)
                 {
                     mInterpreter.mServer->OutputFormat("\r\n");
                 }
-                // scnm test end
             }
         }
     }

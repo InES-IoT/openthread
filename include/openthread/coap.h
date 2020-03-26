@@ -952,7 +952,7 @@ void otCoapSetDefaultHandler(otInstance *aInstance, otCoapRequestHandler aHandle
 void otCoapSetMaxBlockSize(otInstance *aInstance, otCoapBlockSzx aBlockSize);
 
 /**
- * This method sets the maximum block size for CoAP/-s Block-Wise Transfer.
+ * This method gets the maximum block size for CoAP/-s Block-Wise Transfer.
  *
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  *
